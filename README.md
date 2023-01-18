@@ -56,9 +56,12 @@ cd quori_files/quori_ros
 source devel/setup.bash
 ```
 
-## Run Simulation
+## Set-up sound
+Go to Settings in Ubuntu and make sure the output is set to Headphones and the volume is all the way up
 
-- Terminal 1: `roslaunch quori_gazebo quori_world.launch`
+## Run Robot/Simulation
+
+- Terminal 1: `roslaunch quori_launch quori_robot_main.launch` (make sure you set the hardware tag in this file to true or false depending on whether you want to run the simulation or the robot)
 - If you want to test the controllers:
     - Terminal 2: `rosrun rqt_joint_trajectory_controller rqt_joint_trajectory_controller`
 - Terminal 3: `cd src/quori_face_generator/gui && python3 -m http.server 8000` 
@@ -70,12 +73,6 @@ source devel/setup.bash
 2. Make sure the inverter has the switch turned to |
 3. Press the power button to turn PC power on
 
-## Run Robot
-
-- Terminal 1: `roslaunch quori_controller quori_control_diff.launch`
-- If you want to test the controllers:
-    - Terminal 2: `rosrun rqt_joint_trajectory_controller rqt_joint_trajectory_controller`
-    - Alternate Terminal 2 (to be used with controller, keybindings at https://github.com/Quori-ROS/quori_ros/tree/master/src/quori_teleop): `roslaunch quori_teleop quori_teleop.launch`
 
 
 
