@@ -11,7 +11,6 @@ quori:
       - l_shoulder_pitch
       - l_shoulder_roll
       - waist_pitch
-      - turret
 
   base_controller:
     type: diff_drive_controller/DiffDriveController
@@ -27,5 +26,3 @@ quori:
     wheel_radius: 0.07512
     wheel_separation_multiplier: 1.0
     wheel_radius_multiplier    : 1.0
-
-      
