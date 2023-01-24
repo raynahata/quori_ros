@@ -1,0 +1,25 @@
+<launch>
+     <arg name="hardware" default="true" />
+     <group unless="$(arg hardware)">
+          <include file="$(find gazebo_ros)/launch/empty_world.launch">
+               <arg name="world_name" value="$(find quori_gazebo)/worlds/resto1.world" />
+               <arg name="debug" value="false" />
+               <arg name="gui" value="true" />
+               <arg name="paused" value="false" />
+               <arg name="use_sim_time" value="true" />
+               <arg name="headless" value="false" />
+               <arg name="verbose" value="false" />
+          </include>
+     </group>
+
+     <arg name="model" default="$(find quori_description)/urdf/quori.xacro'" />
+     <param name="robot_description" command="xacro '$(arg model)" />
+     <param name="quori/robot_description" command="xacro '$(arg model)" />
+
+     <include file="$(find quori_controller)/launch/quori_control_pather.launch">
+          <arg name="hardware" value="$(arg hardware)" />
+     </include>
+
+     <node pkg="quori_controller" name="quori_pather" type="quori_pather.py" output="screen" />
+
+</launch>
