@@ -1,0 +1,48 @@
+<launch>
+  <arg name="hardware" />
+
+  <param name="robot_description"
+    command="$(find xacro)/xacro $(find quori_description)/urdf/quori.xacro" />
+
+  <rosparam file="$(find quori_controller)/config/quori_control_diff.yaml" command="load" />
+
+  <remap
+    from="/quori/joint_states" to="/joint_states" />
+
+  <group if="$(arg hardware)">
+    <node
+      name="quori_controller" pkg="quori_controller" type="node" ns="/quori" output="screen"
+      respawn="false" required="true">
+      <rosparam file="$(find quori_controller)/config/quori_controller_params.yaml" command="load" />
+    </node>
+  </group>
+
+  <node
+    name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+  <node
+    name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+    respawn="false" output="screen">
+  </node>
+
+  
+
+  <group if="$(arg hardware)">
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" ns="/quori" args="joint_state_controller joint_trajectory_controller base_controller"/>
+    <node name="base_serial_node" pkg="rosserial_python" type="serial_node.py"
+      output="screen" respawn="true">
+      <param name="port" value="/dev/quori/base" />
+      <param
+        name="baud" value="115200" />
+    </node>
+  </group>
+  <group unless="$(arg hardware)">
+    <node name="spawn_urdf" pkg="gazebo_ros"
+    output="screen" type="spawn_model" args="-param robot_description -urdf -model quori" />
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" args="quori/joint_state_controller quori/joint_trajectory_controller quori/base_controller"/>
+  </group>
+
+
+</launch> 
