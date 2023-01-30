@@ -1,47 +1,62 @@
 <launch>
   <arg name="hardware" />
 
+  
+
   <param name="robot_description"
     command="$(find xacro)/xacro $(find quori_description)/urdf/quori.xacro" />
 
-  <rosparam file="$(find quori_controller)/config/quori_control_diff.yaml" command="load" />
+  <param name="quori/robot_description"
+    command="$(find xacro)/xacro $(find quori_description)/urdf/quori.xacro" />
 
-  <remap
-    from="/quori/joint_states" to="/joint_states" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
 
-  <group if="$(arg hardware)">
-    <node
-      name="quori_controller" pkg="quori_controller" type="node" ns="/quori" output="screen"
-      respawn="false" required="true">
-      <rosparam file="$(find quori_controller)/config/quori_controller_params.yaml" command="load" />
-    </node>
-  </group>
-
-  <node
-    name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
-
-  <node
-    name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
     respawn="false" output="screen">
   </node>
 
-  
+  <rosparam file="$(find quori_controller)/config/quori_control_diff.yaml" command="load" />
 
+  <remap from="/quori/joint_states" to="/joint_states" />
+
+  
   <group if="$(arg hardware)">
+
+    <node name="quori_controller" pkg="quori_controller" type="node" ns="/quori" output="screen"
+      respawn="false" required="true">
+      <rosparam file="$(find quori_controller)/config/quori_controller_params.yaml"
+        command="load" />
+    </node>
+
+    <!-- load the controllers -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-        output="screen" ns="/quori" args="joint_state_controller joint_trajectory_controller base_controller"/>
-    <node name="base_serial_node" pkg="rosserial_python" type="serial_node.py"
-      output="screen" respawn="true">
+      output="screen" ns="/quori"
+      args="joint_trajectory_controller joint_state_controller base_controller" />
+
+
+    <node name="base_serial_node" pkg="rosserial_python" type="serial_node.py" output="screen"
+      respawn="true">
       <param name="port" value="/dev/quori/base" />
-      <param
-        name="baud" value="115200" />
+      <param name="baud" value="115200" />
     </node>
   </group>
   <group unless="$(arg hardware)">
-    <node name="spawn_urdf" pkg="gazebo_ros"
-    output="screen" type="spawn_model" args="-param robot_description -urdf -model quori" />
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(find quori_gazebo)/worlds/empty.world" />
+      <arg name="debug" value="false" />
+      <arg name="gui" value="true" />
+      <arg name="paused" value="false" />
+      <arg name="use_sim_time" value="true" />
+      <arg name="headless" value="false" />
+      <arg name="verbose" value="false" />
+    </include>
+
+    <!-- load the controllers -->
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-          output="screen" args="quori/joint_state_controller quori/joint_trajectory_controller quori/base_controller"/>
+      output="screen" args="quori/joint_trajectory_controller quori/joint_state_controller quori/base_controller" />
+
+      <node name="spawn_urdf" pkg="gazebo_ros" output="screen" type="spawn_model" args="-param robot_description -urdf -model quori" />
+
   </group>
 
 
