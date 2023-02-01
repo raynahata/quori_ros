@@ -10,7 +10,7 @@
       <uri>model://ground_plane</uri>
     </include>
   <model name="duck">
-      <pose>0 1.0 1.0  0 0 0</pose>
+      <pose>3.0 0.0 1.0  0 0 0</pose>
       <static>true</static>
       <link name="body">
         <visual name="visual">
@@ -20,6 +20,43 @@
         </visual>
       </link>
     </model>
+
+      <model name="duck3">
+      <pose>-3.0 0.0 1.0  0 0 0</pose>
+      <static>true</static>
+      <link name="body">
+        <visual name="visual">
+          <geometry>
+            <mesh><uri>file://duck.dae</uri></mesh>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <model name="duck2">
+      <pose>0 3.0 1.0  0 0 0</pose>
+      <static>true</static>
+      <link name="body">
+        <visual name="visual">
+          <geometry>
+            <mesh><uri>file://duck.dae</uri></mesh>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
+    <model name="duck4">
+      <pose>0 -3.0 1.0  0 0 0</pose>
+      <static>true</static>
+      <link name="body">
+        <visual name="visual">
+          <geometry>
+            <mesh><uri>file://duck.dae</uri></mesh>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+
     <model name="girl">
       <pose>1.0 0 1.0  0 0 0</pose>
       <static>true</static>
