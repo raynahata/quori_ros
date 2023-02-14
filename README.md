@@ -34,7 +34,7 @@ git submodule init
 ```
 sudo apt-get install ros-noetic-sound-play ros-noetic-rgbd-launch ros-noetic-libuvc-camera ros-noetic-libuvc-ros
 sudo apt-get install ros-noetic-ros-control ros-noetic-ros-controllers ros-noetic-gazebo-ros-control
-sudo apt-get install python3-catkin-tools
+sudo apt-get install python3-catkin-tools ros-noetic-smach-ros ros-noetic-smach-viewer
 sudo apt-get install python3-pip
 sudo apt-get install libglfw3 libglfw3-dev
 sudo apt-get install ros-noetic-rqt-joint-trajectory-controller
