@@ -4,6 +4,7 @@ import rospy
 import smach
 import smach_ros
 from std_msgs.msg import Float64MultiArray, String
+import numpy as np
 
 class Start(smach.State):
     def __init__(self):
@@ -70,8 +71,8 @@ class Exercise(smach.State):
         smach.State.__init__(self, outcomes=['begin_rest'],
                                     input_keys=['sm_current_exercise', 'sm_set_counter', 'sm_set_counter', 'sm_sets_per_exercise', 'sm_exercise_time'],
                                     output_keys=['sm_set_counter'])
-        self.quori_body_face_pub = rospy.Publisher("quori_body_face", Float64MultiArray, queue_size=10)
-        self.quori_sound_pub = rospy.Publisher('quori_sound', String, queue_size=10)
+        self.quori_body_face_pub = rospy.Publisher("quori_body_face", Float64MultiArray, queue_size=2)
+        self.quori_sound_pub = rospy.Publisher('quori_sound', String, queue_size=2)
 
     def execute(self, userdata):
         rospy.loginfo('Executing state EXERCISE {}/{} ({}) - Set {}/{}'.format(userdata.sm_current_exercise[0]+1, 
@@ -81,7 +82,8 @@ class Exercise(smach.State):
                                                                             userdata.sm_sets_per_exercise))
                 
         last_message = rospy.get_rostime()
-        robot_message = "Time to do some %s" % userdata.sm_current_exercise[1]
+        robot_message = "Let us start set %s out of %s of %s" % (userdata.sm_current_exercise[2],
+                                                                    userdata.sm_sets_per_exercise, userdata.sm_current_exercise[1])
         rospy.loginfo("Robot will say: {}".format(robot_message))
         self.quori_sound_pub.publish(robot_message)
         
@@ -89,15 +91,15 @@ class Exercise(smach.State):
         d = rospy.Duration(userdata.sm_exercise_time, 0)
 
         while start + d > rospy.get_rostime():
-            if last_message + rospy.Duration(4, 0) < rospy.get_rostime():
+            if last_message + rospy.Duration(10, 0) < rospy.get_rostime():
                 last_message = rospy.get_rostime()
-
-                robot_message = "Great job with your %s" % userdata.sm_current_exercise[1]
+                time_left = int(np.round((d - (rospy.get_rostime() - start)).to_sec()))
+                robot_message = "%s seconds left on %s" % (time_left, userdata.sm_current_exercise[1])
                 rospy.loginfo("Robot will say: {}".format(robot_message))
                 self.quori_sound_pub.publish(robot_message)
 
                 body_face_msg = Float64MultiArray()
-                body_face_msg.data = [0, 1, 2]
+                body_face_msg.data = [1, 1, 2]
                 rospy.loginfo("Robot will move: {}".format(body_face_msg.data))
                 self.quori_body_face_pub.publish(body_face_msg)
 
@@ -108,7 +110,9 @@ class Rest(smach.State):
         smach.State.__init__(self, outcomes=['end_exercise'],
                                     input_keys=['sm_current_exercise', 'sm_set_counter', 'sm_rest_between_sets', 'sm_rest_between_exercises', 'sm_sets_per_exercise'],
                                     output_keys=['sm_current_exercise'])
-
+        self.quori_body_face_pub = rospy.Publisher("quori_body_face", Float64MultiArray, queue_size=2)
+        self.quori_sound_pub = rospy.Publisher('quori_sound', String, queue_size=2)
+        
     def execute(self, userdata):
         rospy.loginfo('Executing state EXERCISE {}/{} ({}) - Set {}/{}'.format(userdata.sm_current_exercise[0]+1, 
                                                                             len(userdata.sm_set_counter), 
@@ -124,6 +128,9 @@ class Rest(smach.State):
         
         d = rospy.Duration(rest_time, 0)
         rospy.loginfo('Resting for {} sec'.format(rest_time))
+        robot_message = 'Rest for {} seconds'.format(rest_time)
+        self.quori_sound_pub.publish(robot_message)
+        
         rospy.sleep(d)
         userdata.sm_set_counter[userdata.sm_current_exercise[0]] += 1
         return 'end_exercise'
@@ -142,9 +149,9 @@ def main():
     sm_main.userdata.sm_exercise_order = ['bicep curls', 'lateral raises']
     sm_main.userdata.sm_set_counter = [0, 0]
     sm_main.userdata.sm_sets_per_exercise = 3
-    sm_main.userdata.sm_rest_between_sets = 3
-    sm_main.userdata.sm_rest_between_exercises = 4
-    sm_main.userdata.sm_exercise_time = 15
+    sm_main.userdata.sm_rest_between_sets = 30
+    sm_main.userdata.sm_rest_between_exercises = 30
+    sm_main.userdata.sm_exercise_time = 30
     sm_main.userdata.sm_current_exercise = [-1, '', -1] #Exercise number, exercise name, set number
 
     # Open the container
