@@ -42,9 +42,40 @@ def callback(data):
     resized = cv2.resize(img5, (240, 120))
     sharpened_image = unsharp_mask(resized)
     gazebo_pub.publish(bridge.cv2_to_imgmsg(sharpened_image, "bgr8"))
-    robot_pub.publish(bridge.cv2_to_imgmsg(img, "bgr8"))
 
-def unsharp_mask(image, kernel_size=(5, 5), sigma=1.0, amount=1.0, threshold=0):
+
+    robot_image = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+    robot_image = robot_image[150:-150, :, :]
+
+    #screen size 1600x900
+
+    width_scale_percent = 150 # percent of original size
+    height_scale_percent = 200
+    width = int(robot_image.shape[1] * width_scale_percent / 100)
+    height = int(robot_image.shape[0] * height_scale_percent / 100)
+    dim = (width, height) #600x600
+    robot_image = cv2.resize(robot_image, dim, interpolation = cv2.INTER_AREA)
+
+    robot_image = cv2.copyMakeBorder(
+                robot_image, 
+                0, #top - corresponds to left side of the face
+                50, #bottom - corresponds to right side of the face
+                0, #left - corresponds to bottom of the face
+                0, #right - corresponds to top of the face
+                cv2.BORDER_CONSTANT, 
+                value=[255,255,255]
+            )
+
+    robot_image = unsharp_mask(robot_image)
+    robot_pub.publish(bridge.cv2_to_imgmsg(robot_image, "bgr8"))
+
+    cv2.namedWindow("face", cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty("face", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    cv2.imshow("face", robot_image)
+    cv2.waitKey(10)
+
+
+def unsharp_mask(image, kernel_size=(5, 5), sigma=1.0, amount=2.0, threshold=0):
     """Return a sharpened version of the image, using an unsharp mask."""
     blurred = cv2.GaussianBlur(image, kernel_size, sigma)
     sharpened = float(amount + 1) * image - float(amount) * blurred
@@ -63,6 +94,7 @@ def listener():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'listener' node so that multiple listeners can
     # run simultaneously.
+    
     rospy.init_node('image_subscriber', anonymous=True)
 
     rospy.Subscriber("quori/face_generator_image", CompressedImage, callback)

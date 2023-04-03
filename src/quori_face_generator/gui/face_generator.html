@@ -29,6 +29,7 @@
         href="https://www.mand3l.com/static/bootstrap/ico/apple-touch-icon-57-precomposed.png">
     <script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
     <script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+    <script type="text/javascript" src="FaceMotion%20mand3l_files/roslib.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.7.3/nipplejs.js"></script>
     <script type="text/javascript">
         var ros = new ROSLIB.Ros({
@@ -691,7 +692,7 @@
     <script>
         var srcCanvas = document.getElementById('face');
         function publish_image() {
-            // console.log('Running publish_image')
+            console.log('Running publish_image')
             
             destinationCanvas = document.createElement("canvas");
             destinationCanvas.width = srcCanvas.width;
