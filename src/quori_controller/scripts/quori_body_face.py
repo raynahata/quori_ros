@@ -8,7 +8,7 @@ import time
 
 
 def send_body_face(start_position, start_emotion, end_position, end_emotion, duration):
-    print('Start: {}, End: {}, Duration {}'.format(start_position, end_position, duration))
+    # print('Start: {}, End: {}, Duration {}'.format(start_position, end_position, duration))
     #Start point
     traj = JointTrajectory()
     traj.joint_names = ["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
@@ -65,11 +65,11 @@ def callback(data):
         start_position = (neutral_positions + (b-a) * np.random.random_sample((5,)) + a).tolist()
         end_position = (neutral_positions + (b-a) * np.random.random_sample((5,)) + a).tolist()
 
-        neutral_emotion = np.zeros((5,))
+        neutral_emotion = np.zeros((6,))
         a = 0
         b = 0.1
-        start_emotion = (neutral_emotion + (b-a) * np.random.random_sample((5,)) + a).tolist()
-        end_emotion = (neutral_emotion + (b-a) * np.random.random_sample((5,)) + a).tolist()
+        start_emotion = (neutral_emotion + (b-a) * np.random.random_sample((6,)) + a).tolist()
+        end_emotion = (neutral_emotion + (b-a) * np.random.random_sample((6,)) + a).tolist()
 
     elif emotion == 'happy':
         #Torso backward

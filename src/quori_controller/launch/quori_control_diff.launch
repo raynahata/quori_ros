@@ -1,8 +1,6 @@
 <launch>
   <arg name="hardware" />
 
-  
-
   <param name="robot_description"
     command="$(find xacro)/xacro $(find quori_description)/urdf/quori.xacro" />
 
@@ -19,7 +17,6 @@
 
   <remap from="/quori/joint_states" to="/joint_states" />
 
-  
   <group if="$(arg hardware)">
 
     <node name="quori_controller" pkg="quori_controller" type="node" ns="/quori" output="screen"

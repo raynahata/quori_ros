@@ -1,13 +1,13 @@
 <launch>
-     <!-- <arg name="hardware" default="false" />
+     <arg name="hardware" default="true" />
      <include file="$(find quori_controller)/launch/quori_control_diff.launch">
           <arg name="hardware" value="$(arg hardware)" />
-     </include> -->
+     </include>
 
      <include file="$(find
      quori_face_generator)/launch/websocket.launch" />
 
-     <!-- <node pkg="quori_controller"
+     <node pkg="quori_controller"
           name="quori_body_face" type="quori_body_face.py" output="screen" />
 
      <node pkg="quori_controller"
@@ -18,8 +18,5 @@
 
      <node pkg="quori_controller"
           name="quori_sound" type="quori_sound.py" output="screen" />
-
-     <include file="$(find
-     quori_face)/launch/quori_face.launch" />
 
 </launch>
