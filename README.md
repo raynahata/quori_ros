@@ -41,6 +41,8 @@ sudo apt-get install ros-noetic-rqt-joint-trajectory-controller
 sudo apt-get install python3-catkin-tools
 rosdep update
 rosdep install --from-paths src --ignore-src -r -y
+pip install mediapipe
+pip install fastdtw
 ```
 
 7. Build the workspace

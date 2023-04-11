@@ -1,5 +1,5 @@
 <launch>
-     <arg name="hardware" default="true" />
+     <!-- <arg name="hardware" default="true" />
      <include file="$(find quori_controller)/launch/quori_control_diff.launch">
           <arg name="hardware" value="$(arg hardware)" />
      </include>
@@ -17,6 +17,14 @@
           name="sound_play" type="soundplay_node.py" output="screen" />
 
      <node pkg="quori_controller"
-          name="quori_sound" type="quori_sound.py" output="screen" />
+          name="quori_sound" type="quori_sound.py" output="screen" /> -->
+
+     <include file="$(find astra_ros)/launch/default.launch" />
+
+     <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+          <remap from="image" to="/astra_ros/devices/default/color/image_color" />
+     </node>
+
+     <node pkg="quori_exercises" name="exercise_evaluation" type="exercise_evaluation.py" output="screen" />
 
 </launch>
