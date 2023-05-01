@@ -2,12 +2,12 @@
      <!-- <arg name="hardware" default="true" />
      <include file="$(find quori_controller)/launch/quori_control_diff.launch">
           <arg name="hardware" value="$(arg hardware)" />
-     </include>
+     </include> -->
 
-     <include file="$(find
-     quori_face_generator)/launch/websocket.launch" />
+     <!-- <include file="$(find
+     quori_face_generator)/launch/websocket.launch" /> -->
 
-     <node pkg="quori_controller"
+     <!--- <node pkg="quori_controller"
           name="quori_body_face" type="quori_body_face.py" output="screen" />
 
      <node pkg="quori_controller"
@@ -19,12 +19,12 @@
      <node pkg="quori_controller"
           name="quori_sound" type="quori_sound.py" output="screen" /> -->
 
-     <include file="$(find astra_ros)/launch/default.launch" />
+     <!-- <include file="$(find astra_ros)/launch/default.launch" /> -->
 
-     <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+     <!-- <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
           <remap from="image" to="/astra_ros/devices/default/color/image_color" />
-     </node>
+     </node> -->
 
-     <node pkg="quori_exercises" name="exercise_evaluation" type="exercise_evaluation.py" output="screen" />
+     <!-- <node pkg="quori_exercises" name="exercise_evaluation" type="exercise_evaluation.py" output="screen" /> -->
 
 </launch>
