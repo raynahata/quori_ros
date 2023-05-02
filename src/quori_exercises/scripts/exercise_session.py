@@ -10,6 +10,7 @@ from scipy import signal
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
+import cv2
 
 class CameraSubscriber:
 
@@ -28,7 +29,7 @@ class CameraSubscriber:
         self.threshold1 = 1000
         self.threshold2 = 1500
         self.threshold3 = 800
-    
+
     def calc_angle(self, vec_0, vec_1, angle_type):
         if angle_type == 'xy':
             angle = np.arctan2(vec_1[1], vec_1[1]) - \
@@ -52,40 +53,40 @@ class CameraSubscriber:
         for joint_ind, joint in enumerate(self.npzfile['joints']):
             grads.append(np.gradient(angles[:,joint_ind]))
             if int(joint[4]) == -1: #Only consider segmenting joints
-                peaks.append(signal.find_peaks(grads[joint_ind], height=1.5, distance=20, prominence=0.5)[0].astype('int'))
+                peaks.append(signal.find_peaks(grads[joint_ind], distance=20)[0].astype('int'))
             if int(self.npzfile['joints'][joint_ind][4]) == -2: #Only consider segmenting joints
                 peaks.append(signal.find_peaks(angles[:,joint_ind], height=50, distance=20, prominence=1.0)[0].astype('int'))
         peaks = np.sort(np.concatenate(peaks))
         grads = np.array(grads).T
-        # print('Peaks', peaks)
         return peaks, grads
 
     def check_if_new_peak(self, angles, grads, peak_candidate, index_to_search):
 
         #Peaks in absolute indices
         #angles, Grads, peak_candidates in relative units
-        if (len(self.all_peaks) == 0 and index_to_search[peak_candidate] > 20) or (len(self.all_peaks) > 0 and self.all_peaks[-1] + 30 < index_to_search[peak_candidate]):
-            
+
+        if (len(self.all_peaks) == 0 and index_to_search[peak_candidate] > 10) or (len(self.all_peaks) > 0 and self.all_peaks[-1] + 10 < index_to_search[peak_candidate]):
             range_to_check = np.arange(np.max([peak_candidate-5, 0]), np.min([peak_candidate+5, angles.shape[0]])).astype('int')
             max_val = np.argmax(angles[range_to_check,:][:,self.segmenting_joints],axis=0)
             
             max_val = np.mean(max_val).astype('int')
             
-            if self.exercise_name == 'bicep_curls':
-                grad_min = -3
-                grad_max = 3
-            else:
-                grad_min = -3
-                grad_max = 3
+            # if self.exercise_name == 'bicep_curls':
+            #     grad_min = -3
+            #     grad_max = 3
+            # else:
+            #     grad_min = -3
+            #     grad_max = 3
 
-            if (np.max(grads[range_to_check][:,self.segmenting_joints]) > grad_max \
-                    or np.min(grads[range_to_check][:,self.segmenting_joints]) > grad_min)  or \
-                (len(self.all_peaks) > 0 \
-                    and np.abs(self.all_peaks[-1] - index_to_search[range_to_check[max_val]]) > 50 \
-                    and np.max(grads[range_to_check][:,self.segmenting_joints]) > 0.8 \
-                    and np.min(grads[range_to_check][:,self.segmenting_joints]) > -0.8):
-                return range_to_check[max_val]
-        
+            # print(index_to_search[range_to_check[max_val]], np.max(grads[range_to_check][:,self.segmenting_joints]), np.min(grads[range_to_check][:,self.segmenting_joints]))
+            # if (np.max(grads[range_to_check][:,self.segmenting_joints]) > grad_max \
+            #         or np.min(grads[range_to_check][:,self.segmenting_joints]) > grad_min)  or \
+            #     (len(self.all_peaks) > 0 \
+            #         and np.abs(self.all_peaks[-1] - index_to_search[range_to_check[max_val]]) > 50 \
+            #         and np.max(grads[range_to_check][:,self.segmenting_joints]) > 0.8 \
+            #         and np.min(grads[range_to_check][:,self.segmenting_joints]) > -0.8):
+            return range_to_check[max_val]
+            
         return False
 
     def evaluate_rep(self, angles, start_time, end_time):
@@ -168,13 +169,14 @@ class CameraSubscriber:
         feedback = {'speed': speed, 'form': forms, 'distances': all_distances, 'closest_expert': closest_expert, 'best_distances': best_distances, 'groups': all_f}
 
         print('{} speed, {}'.format(feedback['speed'],feedback['groups']))
+
         return feedback
+
 
     def callback(self, data):
         if not self.flag:
             return
 
-        print('Recording!')
         image = np.frombuffer(data.data, dtype=np.uint8).reshape(
             data.height, data.width, -1)
         results = self.pose_detector.process(image)
@@ -206,9 +208,9 @@ class CameraSubscriber:
             
             self.all_angles = np.vstack((self.all_angles, angle))
 
-            #Look for peaks in the last 20 points
-            if self.all_angles.shape[0] > 20:
-                index_to_search = np.arange(np.max([0,self.all_angles.shape[0]-50]), self.all_angles.shape[0]).astype('int')
+            #Only look for new peaks every 30 points
+            if self.all_angles.shape[0] % 10 == 0 and self.all_angles.shape[0] > 15:
+                index_to_search = np.arange(np.max([0,self.all_angles.shape[0]-500]), self.all_angles.shape[0]).astype('int')
                 
                 peak_candidates, grads  = self.find_peaks(self.all_angles[index_to_search,:])
                 
@@ -217,15 +219,28 @@ class CameraSubscriber:
 
                     if res:
                         self.all_peaks.append(index_to_search[res])
-                        
+                        print(self.all_peaks[-1])
                         #Evaluate new rep
                         if len(self.all_peaks) > 1:
-                            current_rep = self.all_angles[self.all_peaks[-2]:self.all_peaks[-1]]
-                            feedback = self.evaluate_rep(current_rep, self.all_times[self.all_peaks[-2]], self.all_times[self.all_peaks[-1]])
+                            # current_rep = self.all_angles[self.all_peaks[-2]:self.all_peaks[-1]]
+                            # feedback = self.evaluate_rep(current_rep, self.all_times[self.all_peaks[-2]], self.all_times[self.all_peaks[-1]])
 
-                            self.all_feedback.append(feedback)
-                            
+                            self.all_feedback.append('')
+
     def plot_results(self):
+        if self.all_angles.shape[0] > 20 and self.all_peaks[-1] < self.all_angles.shape[0]:
+            #Add the last point as a peak
+            self.all_peaks.append(self.all_angles.shape[0])
+            print(self.all_peaks[-1])
+
+            self.all_feedback.append('')
+            #Evaluate new rep
+            if len(self.all_peaks) > 1:
+                # current_rep = self.all_angles[self.all_peaks[-2]:self.all_peaks[-1]]
+                # feedback = self.evaluate_rep(current_rep, self.all_times[self.all_peaks[-2]], self.all_times[self.all_peaks[-1]])
+
+                self.all_feedback.append('')
+        print('All peaks', self.all_peaks)
         # Evaluation plot
         fig1, ax1 = plt.subplots(len(self.npzfile['joints']) + 1, 1, sharex=True, sharey=True)
         # fig2, ax2 = plt.subplots(1, len(npzfile['joints']))
@@ -234,27 +249,27 @@ class CameraSubscriber:
             ax1[joint_ind].plot(self.all_angles[:,joint_ind], 'k', linestyle=':')
             
             distances = []
-            for rep_ind in range(len(self.all_feedback)):
-                if self.all_feedback[rep_ind]['form'][joint_ind] == 'good':
-                    color = 'g'
-                elif self.all_feedback[rep_ind]['form'][joint_ind] == 'ok':
-                    color = 'y'
-                elif not self.all_feedback[rep_ind]['form'][joint_ind] == 'bad':
-                    color = 'm'
-                else:
-                    color = 'r'
+            for rep_ind in range(len(self.all_peaks)-1):
+                # if self.all_feedback[rep_ind]['form'][joint_ind] == 'good':
+                #     color = 'g'
+                # elif self.all_feedback[rep_ind]['form'][joint_ind] == 'ok':
+                #     color = 'y'
+                # elif not self.all_feedback[rep_ind]['form'][joint_ind] == 'bad':
+                #     color = 'm'
+                # else:
+                #     color = 'r'
 
-                mid_point_x = np.mean([self.all_peaks[rep_ind], self.all_peaks[rep_ind+1]]).astype('int')
-                mid_point_y = self.all_angles[mid_point_x, joint_ind]
+                color = 'g'
+                # mid_point_x = np.mean([self.all_peaks[rep_ind], self.all_peaks[rep_ind+1]]).astype('int')
 
-                if joint_ind == 0:
-                    text = 'Speed: {}'.format(self.all_feedback[rep_ind]['speed'])
-                    for f in self.all_feedback[rep_ind]['groups']:
-                        text += '\n {}'.format(f)
-                    if rep_ind % 2:
-                        ax1[len(self.npzfile['joints'])].annotate(text, xy=(self.all_peaks[rep_ind], 50), xytext=(self.all_peaks[rep_ind], 50), arrowprops=dict(facecolor='black', shrink=0.05))
-                    else:
-                        ax1[len(self.npzfile['joints'])].annotate(text, xy=(self.all_peaks[rep_ind], 50), xytext=(self.all_peaks[rep_ind], 120), arrowprops=dict(facecolor='black', shrink=0.05))
+                # if joint_ind == 0:
+                #     text = 'Speed: {}'.format(self.all_feedback[rep_ind]['speed'])
+                #     for f in self.all_feedback[rep_ind]['groups']:
+                #         text += '\n {}'.format(f)
+                #     if rep_ind % 2:
+                #         ax1[len(self.npzfile['joints'])].annotate(text, xy=(self.all_peaks[rep_ind], 50), xytext=(self.all_peaks[rep_ind], 50), arrowprops=dict(facecolor='black', shrink=0.05))
+                #     else:
+                #         ax1[len(self.npzfile['joints'])].annotate(text, xy=(self.all_peaks[rep_ind], 50), xytext=(self.all_peaks[rep_ind], 120), arrowprops=dict(facecolor='black', shrink=0.05))
 
                 if rep_ind % 2:
                     ax1[joint_ind].plot(np.arange(self.all_peaks[rep_ind], self.all_peaks[rep_ind+1]), self.all_angles[self.all_peaks[rep_ind]: self.all_peaks[rep_ind+1], joint_ind], color, linestyle='--', linewidth=4)
@@ -266,9 +281,9 @@ class CameraSubscriber:
 
                 ax1[joint_ind].set_title('{} angle'.format(joint[5]))
 
-                distances.append(self.all_feedback[rep_ind]['distances'][joint_ind,:])
+                # distances.append(self.all_feedback[rep_ind]['distances'][joint_ind,:])
             
-            distances = np.array(distances).T
+            # distances = np.array(distances).T
             # im = ax2[joint_ind].imshow(distances, cmap='Greys')
             # ax2[joint_ind].set_title('{} angle'.format(joint[5]))
 
@@ -286,9 +301,9 @@ class CameraSubscriber:
         plt.show()
 
 if __name__ == '__main__':
-
+    
     rospy.init_node('exercise_session', anonymous=True)
-
+    
     #Initialize the publishers/subscribers
     quori_body_face_pub = rospy.Publisher("quori_body_face", Float64MultiArray, queue_size=2)
     quori_sound_pub = rospy.Publisher('quori_sound', String, queue_size=2)
@@ -321,17 +336,19 @@ if __name__ == '__main__':
         if int(joint[4]) == -1:
             cam_sub.segmenting_joints.append(joint_ind)
 
-    inittime = datetime.now(tz)
+    rospy.sleep(4)
 
-    while (datetime.now(tz) - inittime).total_seconds() < 20:        
+    inittime = datetime.now(tz)
+    
+    print('Recording!')
+    while (datetime.now(tz) - inittime).total_seconds() < 15:        
             
         cam_sub.flag = True
     
     cam_sub.flag = False
     print('Done with exercise')
     cam_sub.plot_results()
-    rospy.spin()
-
+    cam_sub.sub.unregister()
 
     
     
