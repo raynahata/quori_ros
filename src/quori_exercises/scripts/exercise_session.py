@@ -12,292 +12,200 @@ from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
 import cv2
 
-class CameraSubscriber:
+class ExerciseEval:
 
     def __init__(self):
-        self.sub = rospy.Subscriber("/astra_ros/devices/default/color/image_color", Image, self.callback)
-        self.all_peaks = [0]
-        self.all_feedback = []
-        self.all_landmarks = []
-        self.all_times = []
-        self.landmark_points = ['nose', 'left_eye_inner', 'left_eye', 'left_eye_outer', 'right_eye_inner', 'right_eye', 'right_eye_outer', 'left_ear', 'right_ear', 'mouth_left', 'mouth_right', 'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist', 'left_pinky', 'right_pinky', 'left_index', 'right_index', 'left_thumb', 'right_thumb', 'left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle', 'left_heel', 'right_heel', 'left_foot_index', 'right_foot_index']
+        self.sub = rospy.Subscriber("joint_angles", Float64MultiArray, self.callback)
+        self.peaks = []
+        self.feedback = []
+        self.times = []
         self.pose_detector = mp.solutions.pose.Pose(
                     min_detection_confidence=0.5,  # have some confidence baseline
                     min_tracking_confidence=0.5,
                     model_complexity=0,)
         self.flag = False
-        self.threshold1 = 1000
-        self.threshold2 = 1500
+        self.threshold1 = 500
+        self.threshold2 = 800
         self.threshold3 = 800
 
-    def calc_angle(self, vec_0, vec_1, angle_type):
-        if angle_type == 'xy':
-            angle = np.arctan2(vec_1[1], vec_1[1]) - \
-                np.arctan2(-vec_0[1], vec_0[0])
-        elif angle_type == 'yz':
-            angle = np.arctan2(vec_1[1], vec_1[2]) - \
-                np.arctan2(-vec_0[1], -vec_0[2])
-        elif angle_type == 'xz':
-            angle = np.arctan2(vec_1[2], vec_1[0]) - \
-                np.arctan2(-vec_0[2], -vec_0[0])
-        
-        angle = np.abs(angle*180.0/np.pi)
-        if angle > 180:
-            angle = 360-angle
-
-        return 180 - angle
-
-    def find_peaks(self, angles):
-        grads = []
+    def find_peaks(self,angles):
+        grads = np.zeros_like(angles)
         peaks = []
-        for joint_ind, joint in enumerate(self.npzfile['joints']):
-            grads.append(np.gradient(angles[:,joint_ind]))
-            if int(joint[4]) == -1: #Only consider segmenting joints
-                peaks.append(signal.find_peaks(grads[joint_ind], distance=20)[0].astype('int'))
-            if int(self.npzfile['joints'][joint_ind][4]) == -2: #Only consider segmenting joints
-                peaks.append(signal.find_peaks(angles[:,joint_ind], height=50, distance=20, prominence=1.0)[0].astype('int'))
+        for joint_ind in range(angles.shape[1]):
+            grads[:, joint_ind] = np.gradient(angles[:,joint_ind])
+            if joint_ind in self.segmenting_joints:
+                peaks.append(signal.find_peaks(grads[:, joint_ind], height=1.5, distance=20, prominence=0.5)[0].astype('int'))
         peaks = np.sort(np.concatenate(peaks))
-        grads = np.array(grads).T
+        # print('Peaks', peaks)
         return peaks, grads
 
-    def check_if_new_peak(self, angles, grads, peak_candidate, index_to_search):
-
+    def check_if_new_peak(self, grads, peak_candidate, index_to_search):
         #Peaks in absolute indices
-        #angles, Grads, peak_candidates in relative units
+        #Grads, peak_candidates in relative units
 
-        if (len(self.all_peaks) == 0 and index_to_search[peak_candidate] > 10) or (len(self.all_peaks) > 0 and self.all_peaks[-1] + 10 < index_to_search[peak_candidate]):
-            range_to_check = np.arange(np.max([peak_candidate-5, 0]), np.min([peak_candidate+5, angles.shape[0]])).astype('int')
-            max_val = np.argmax(angles[range_to_check,:][:,self.segmenting_joints],axis=0)
-            
+        if (len(self.peaks) == 0 and index_to_search[peak_candidate] > 15) or (len(self.peaks) > 0 and self.peaks[-1] + 15 < index_to_search[peak_candidate]):
+            range_to_check = np.arange(np.max([peak_candidate-5, 0]), np.min([peak_candidate+5, grads.shape[0]])).astype('int')
+
+            max_val = np.argmax(grads[range_to_check,:][:,self.segmenting_joints],axis=0)
             max_val = np.mean(max_val).astype('int')
-            
-            # if self.exercise_name == 'bicep_curls':
-            #     grad_min = -3
-            #     grad_max = 3
-            # else:
-            #     grad_min = -3
-            #     grad_max = 3
 
-            # print(index_to_search[range_to_check[max_val]], np.max(grads[range_to_check][:,self.segmenting_joints]), np.min(grads[range_to_check][:,self.segmenting_joints]))
-            # if (np.max(grads[range_to_check][:,self.segmenting_joints]) > grad_max \
-            #         or np.min(grads[range_to_check][:,self.segmenting_joints]) > grad_min)  or \
-            #     (len(self.all_peaks) > 0 \
-            #         and np.abs(self.all_peaks[-1] - index_to_search[range_to_check[max_val]]) > 50 \
-            #         and np.max(grads[range_to_check][:,self.segmenting_joints]) > 0.8 \
-            #         and np.min(grads[range_to_check][:,self.segmenting_joints]) > -0.8):
-            return range_to_check[max_val]
+            grad_min = -3
+            grad_max = 3
+
+            actual_grad_max = np.max(grads[range_to_check][:, self.segmenting_joints])
+            actual_grad_min = np.min(grads[range_to_check][:, self.segmenting_joints])
+            actual_max = np.max(self.angles[range_to_check][:,self.segmenting_joints])
+            actual_min = np.min(self.angles[range_to_check][:,self.segmenting_joints])
+
+            actual_max_loc = np.where(self.angles[range_to_check][:,self.segmenting_joints] == actual_max)[0][0]
+            actual_min_loc = np.where(self.angles[range_to_check][:,self.segmenting_joints] == actual_min)[0][0]
+            # print(actual_max_loc, actual_min_loc)
+            # print(range_to_check[max_val], actual_grad_max, actual_grad_min, actual_max, actual_min)
+            # print('-')
+            if (actual_grad_max > grad_max \
+                or actual_grad_min < grad_min) \
+                    and actual_max_loc > actual_min_loc:
+                
+                return range_to_check[max_val]
             
         return False
 
-    def evaluate_rep(self, angles, start_time, end_time):
-
-        all_distances = np.zeros((len(self.npzfile['joints']), len(self.npzfile['experts'])))
-        for joint_ind, joint in enumerate(self.npzfile['joints']):
-            for ii in range(len(self.npzfile['experts'])):
-                current_expert = self.npzfile['experts'][ii][:,joint_ind]
-                distance, path = fastdtw(angles[:,joint_ind], current_expert, dist=euclidean)
-                all_distances[joint_ind,ii] = distance
-            
-        #Get closest expert for each joint
-        closest_expert = np.argmin(all_distances, axis=1)
-        best_distances = [all_distances[ii, e] for ii, e in enumerate(closest_expert)]
-        expert_messages = [self.npzfile['messages'][e] for e in closest_expert]
-        
-        forms = []
-        for joint_ind, (d, m) in enumerate(zip(best_distances, expert_messages)):
-            if d < self.threshold1 and m == 'good':
-                form = 'good'
-            elif d < self.threshold2 and m == 'good':
-                form = 'ok'
-            elif d < self.threshold3 and not (m == 'good'):
-                form = m
+    def set_joint_groups(self):
+        groups = {}
+        for joint_ind, joint in enumerate(self.joints):
+            if joint[-1] in groups.keys():
+                groups[joint[-1]].append(joint_ind)
             else:
-                form = 'bad'
-            forms.append(form)
+                groups[joint[-1]] = [joint_ind]
+        self.joint_groups = groups
+
+        joint_to_groups = np.zeros((len(self.joints)))
+        counter = 0
+        for joint_group, joints in self.joint_groups.items():
+            for joint in joints:
+                joint_to_groups[joint] = counter
+            counter += 1
         
-        #Get the mode for each joint_group
-        all_f = []
-        for joint_name, group in self.npzfile['joint_groups'].item().items():
-            values_for_group = []
-            low_count = 0
-            high_count = 0
-            for g in group:
-                val = forms[g]
-                if val == 'good':
-                    values_for_group.append(1.0)
-                elif val == 'ok':
-                    values_for_group.append(0.0)
+        self.joint_to_groups = np.array(joint_to_groups).astype(int)
+
+    def evaluate_rep(self, current_rep, rep_duration):
+        distances = np.zeros((len(self.joints), len(self.experts)))
+        for joint_ind in range(len(self.joints)):
+            for expert_ind in range(len(self.experts)):
+                current_expert = self.experts[expert_ind][:,joint_ind]
+                distance, _ = fastdtw(current_rep[:, joint_ind], current_expert, dist=euclidean)
+                distances[joint_ind, expert_ind] = distance
+        
+        corrections = []
+        speeds = []
+        for joint_group, joints in self.joint_groups.items():
+
+            #Get the average distance for each expert
+            expert_distances = np.mean(distances[joints,:], axis=0)
+        
+            #Get closest expert
+            closest_expert = np.argmin(expert_distances)
+            best_distance = np.min(expert_distances)
+            expert_label = self.labels[closest_expert]
+
+            if best_distance < self.threshold1:
+                correction = expert_label
+            elif best_distance < self.threshold2:
+                if expert_label == 'Good':
+                    correction = 'ok'
                 else:
-                    if 'low' in val:
-                        low_count += 1
-                    elif 'too' in val:
-                        high_count += 1
-                    values_for_group.append(-1.0)
-            avg_group = np.mean(values_for_group)
-
-            if avg_group < -0.5:
-                #If more than one range of motion comments
-                
-                if low_count > 1:
-                    f = 'Low range of motion for {}'.format(joint_name)
-
-                elif high_count > 1: 
-                    f = 'Too much range of motion for {}'.format(joint_name)
-                
-                else: 
-                    f = 'Bad form for {}'.format(joint_name)
-            
-            elif avg_group > 0.3:
-                f = 'Good form {}'.format(joint_name)
-            
+                    correction = 'bad'
             else:
-                f = 'Ok form for {}'.format(joint_name)
-            all_f.append(f)
+                correction = 'bad'
+            corrections.append(correction)
 
-        #duration 
-        start = datetime.strptime(start_time, "%m/%d/%Y/%H:%M:%S")
-        end = datetime.strptime(end_time, "%m/%d/%Y/%H:%M:%S")
-        length = (end - start).total_seconds()
+            if rep_duration > np.mean(self.expert_duration) + 2*np.std(self.expert_duration):
+                speed = 'fast'
+            elif rep_duration < np.mean(self.expert_duration) - 2*np.std(self.expert_duration):
+                speed = 'slow'
+            else:
+                speed = 'good'
+            speeds.append(speed)
         
-        if length > np.mean(self.npzfile['lengths']) + 2*np.std(self.npzfile['lengths']):
-            speed = 'fast'
-        elif length < np.mean(self.npzfile['lengths']) - 2*np.std(self.npzfile['lengths']):
-            speed = 'slow'
-        else:
-            speed = 'good'
-        
-        feedback = {'speed': speed, 'form': forms, 'distances': all_distances, 'closest_expert': closest_expert, 'best_distances': best_distances, 'groups': all_f}
-
-        print('{} speed, {}'.format(feedback['speed'],feedback['groups']))
+        feedback = {'speed': speeds, 'correction': corrections}
 
         return feedback
 
-
     def callback(self, data):
         if not self.flag:
+            if self.angles.shape[0] > 10 and len(self.peaks) > 0 and self.peaks[-1] < self.angles.shape[0]:
+                #Add last point
+                self.peaks.append(self.angles.shape[0]-1)
+
+                #Evaluate rep
+                current_rep = self.angles[self.peaks[-2]:self.peaks[-1],:]
+                rep_duration = (self.times[self.peaks[-2]] - self.times[self.peaks[-1]]).total_seconds()
+                feedback = self.evaluate_rep(current_rep, rep_duration)
+                self.feedback.append(feedback)
+
             return
 
-        image = np.frombuffer(data.data, dtype=np.uint8).reshape(
-            data.height, data.width, -1)
-        results = self.pose_detector.process(image)
-        
-        if results.pose_landmarks:
-            ct = datetime.now(tz)
-            row = []
-            row.append(ct.strftime("%m/%d/%Y/%H:%M:%S"))
+        #Read angle from message
+        angle = data.data
+        self.angles = np.vstack((self.angles, angle))
 
-            landmarks = {}
-            for i, landmark in enumerate(results.pose_landmarks.landmark):
-                landmarks[self.landmark_points[i]] = [landmark.x, landmark.y, landmark.z]
-                row.append(landmarks[self.landmark_points[i]])
-            self.all_landmarks.append(row)
+        #Get time
+        time = datetime.now(tz)
+        self.times.append(time)
 
-            self.all_times.append(ct.strftime("%m/%d/%Y/%H:%M:%S"))
-
-            angle = np.zeros((len(self.npzfile['joints'])))
-            for joint_ind, joint in enumerate(self.npzfile['joints']):
-                #Get current angles
-                point_0 = np.array(landmarks[joint[0]])
-                point_1 = np.array(landmarks[joint[1]])
-                point_2 = np.array(landmarks[joint[2]])
-
-                vec_0 = point_0 - point_1
-                vec_1 = point_2 - point_1
-
-                angle[joint_ind] = self.calc_angle(vec_0, vec_1, joint[3])
+        #Look for new peaks
+        if self.angles.shape[0] % 10 == 0 and self.angles.shape[0] > 15:
+            index_to_search = np.arange(np.max([0,self.angles.shape[0]-500]), self.angles.shape[0]).astype('int')
             
-            self.all_angles = np.vstack((self.all_angles, angle))
-
-            #Only look for new peaks every 30 points
-            if self.all_angles.shape[0] % 10 == 0 and self.all_angles.shape[0] > 15:
-                index_to_search = np.arange(np.max([0,self.all_angles.shape[0]-500]), self.all_angles.shape[0]).astype('int')
+            peak_candidates, grads  = self.find_peaks(self.angles[index_to_search,:])
                 
-                peak_candidates, grads  = self.find_peaks(self.all_angles[index_to_search,:])
-                
-                for peak_candidate in peak_candidates:
-                    res = self.check_if_new_peak(self.all_angles[index_to_search], grads, peak_candidate, index_to_search)
-
-                    if res:
-                        self.all_peaks.append(index_to_search[res])
-                        print(self.all_peaks[-1])
-                        #Evaluate new rep
-                        if len(self.all_peaks) > 1:
-                            # current_rep = self.all_angles[self.all_peaks[-2]:self.all_peaks[-1]]
-                            # feedback = self.evaluate_rep(current_rep, self.all_times[self.all_peaks[-2]], self.all_times[self.all_peaks[-1]])
-
-                            self.all_feedback.append('')
+            #Get actual list of peaks
+            for peak_candidate in peak_candidates:
+                res = self.check_if_new_peak(grads, peak_candidate, index_to_search)
+                if res:
+                    self.peaks.append(index_to_search[res])
+                    print(self.peaks[-1])
+                    #Evaluate new rep
+                    if len(self.peaks) > 1:
+                        current_rep = self.angles[self.peaks[-2]:self.peaks[-1],:]
+                        rep_duration = (self.times[self.peaks[-2]] - self.times[self.peaks[-1]]).total_seconds()
+                        feedback = self.evaluate_rep(current_rep, rep_duration)
+                        self.feedback.append(feedback)
 
     def plot_results(self):
-        if self.all_angles.shape[0] > 20 and self.all_peaks[-1] < self.all_angles.shape[0]:
-            #Add the last point as a peak
-            self.all_peaks.append(self.all_angles.shape[0])
-            print(self.all_peaks[-1])
+        print('Peaks', self.peaks)
 
-            self.all_feedback.append('')
-            #Evaluate new rep
-            if len(self.all_peaks) > 1:
-                # current_rep = self.all_angles[self.all_peaks[-2]:self.all_peaks[-1]]
-                # feedback = self.evaluate_rep(current_rep, self.all_times[self.all_peaks[-2]], self.all_times[self.all_peaks[-1]])
+        fig, ax = plt.subplots(self.angles.shape[1], sharex=True, sharey=True)
 
-                self.all_feedback.append('')
-        print('All peaks', self.all_peaks)
-        # Evaluation plot
-        fig1, ax1 = plt.subplots(len(self.npzfile['joints']) + 1, 1, sharex=True, sharey=True)
-        # fig2, ax2 = plt.subplots(1, len(npzfile['joints']))
+        for ii in range(self.angles.shape[1]):
+            ax[ii].plot(self.angles[:,ii], 'k', linestyle=':')
+            ax[ii].plot(np.gradient(self.angles[:,ii]), 'k')
 
-        for joint_ind, joint in enumerate(self.npzfile['joints']):
-            ax1[joint_ind].plot(self.all_angles[:,joint_ind], 'k', linestyle=':')
-            
-            distances = []
-            for rep_ind in range(len(self.all_peaks)-1):
-                # if self.all_feedback[rep_ind]['form'][joint_ind] == 'good':
-                #     color = 'g'
-                # elif self.all_feedback[rep_ind]['form'][joint_ind] == 'ok':
-                #     color = 'y'
-                # elif not self.all_feedback[rep_ind]['form'][joint_ind] == 'bad':
-                #     color = 'm'
-                # else:
-                #     color = 'r'
-
-                color = 'g'
-                # mid_point_x = np.mean([self.all_peaks[rep_ind], self.all_peaks[rep_ind+1]]).astype('int')
-
-                # if joint_ind == 0:
-                #     text = 'Speed: {}'.format(self.all_feedback[rep_ind]['speed'])
-                #     for f in self.all_feedback[rep_ind]['groups']:
-                #         text += '\n {}'.format(f)
-                #     if rep_ind % 2:
-                #         ax1[len(self.npzfile['joints'])].annotate(text, xy=(self.all_peaks[rep_ind], 50), xytext=(self.all_peaks[rep_ind], 50), arrowprops=dict(facecolor='black', shrink=0.05))
-                #     else:
-                #         ax1[len(self.npzfile['joints'])].annotate(text, xy=(self.all_peaks[rep_ind], 50), xytext=(self.all_peaks[rep_ind], 120), arrowprops=dict(facecolor='black', shrink=0.05))
-
-                if rep_ind % 2:
-                    ax1[joint_ind].plot(np.arange(self.all_peaks[rep_ind], self.all_peaks[rep_ind+1]), self.all_angles[self.all_peaks[rep_ind]: self.all_peaks[rep_ind+1], joint_ind], color, linestyle='--', linewidth=4)
-
-                    # ax1[joint_ind].annotate(all_feedback[rep_ind]['speed'], xy=(mid_point_x, mid_point_y), xytext=(mid_point_x, mid_point_y+20), arrowprops=dict(facecolor='black', shrink=0.05))
+            counter = 0
+            for start, end in zip(self.peaks[:-1], self.peaks[1:]):
+                if counter % 2 == 0:
+                    style = '--'
                 else:
-                    ax1[joint_ind].plot(np.arange(self.all_peaks[rep_ind], self.all_peaks[rep_ind+1]), self.all_angles[self.all_peaks[rep_ind]: self.all_peaks[rep_ind+1], joint_ind], color, linewidth=4)
-                    # ax1[joint_ind].annotate(all_feedback[rep_ind]['speed'], xy=(mid_point_x, mid_point_y), xytext=(mid_point_x, mid_point_y+35), arrowprops=dict(facecolor='black', shrink=0.05))
+                    style = '-'
+                correction = self.feedback[counter]['correction'][self.joint_to_groups[ii]]
+                if correction == 'Good':
+                    color = 'g'
+                elif correction == 'ok':
+                    color = 'y'
+                elif correction == 'bad':
+                    color = 'r'
+                elif correction == 'low range of motion':
+                    color = 'm'
+                elif correction == 'high range of motion':
+                    color = 'b'
+                else:
+                    color = 'k' 
 
-                ax1[joint_ind].set_title('{} angle'.format(joint[5]))
+                ax[ii].plot(np.arange(start, end), self.angles[start:end,ii], linestyle=style, color=color)
 
-                # distances.append(self.all_feedback[rep_ind]['distances'][joint_ind,:])
-            
-            # distances = np.array(distances).T
-            # im = ax2[joint_ind].imshow(distances, cmap='Greys')
-            # ax2[joint_ind].set_title('{} angle'.format(joint[5]))
+                counter += 1
 
-            # demo_labels = ['Demo {}'.format(ii) for ii in range(distances.shape[0])]
-            # ax2[joint_ind].set_yticks(np.arange(distances.shape[0]))
-            # ax2[joint_ind].set_yticklabels(demo_labels)
-
-            # rep_labels = ['Rep {}'.format(ii) for ii in range(distances.shape[1])]
-            # ax2[joint_ind].set_xticks(np.arange(distances.shape[1]))
-            # ax2[joint_ind].set_xticklabels(rep_labels)
-
-            # fig2.colorbar(im, ax=ax2[joint_ind])
-
-
+            ax[ii].set_title('{}-{}-{}-{}'.format(self.joints[ii][0], self.joints[ii][1], self.joints[ii][2], self.joints[ii][3]))
         plt.show()
 
 if __name__ == '__main__':
@@ -316,39 +224,41 @@ if __name__ == '__main__':
     #Consent first
     quori_sound_pub.publish("When consent is completed, press enter on the keyboard")
 
-    input("Press Enter to continue to training...")
+    # input("Press Enter to continue to training...")
 
     #Training next
     training_message = "Training information here"
 
-    input("Press Enter to continue to exercises...")
+    # input("Press Enter to continue to exercises...")
 
     #Start with exercise 1, set 1
-    cam_sub = CameraSubscriber()
+    exercise_eval = ExerciseEval()
 
-    cam_sub.exercise_name = 'bicep_curls'
-    cam_sub.npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}.npz'.format(cam_sub.exercise_name), allow_pickle=True)
-
-    cam_sub.all_angles = np.empty((0,len(cam_sub.npzfile['joints'])))
+    exercise_eval.exercise_name = 'bicep_curls'
     
-    cam_sub.segmenting_joints = []
-    for joint_ind, joint in enumerate(cam_sub.npzfile['joints']):
-        if int(joint[4]) == -1:
-            cam_sub.segmenting_joints.append(joint_ind)
+    npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
+    
+    exercise_eval.joints, exercise_eval.experts, exercise_eval.expert_duration, exercise_eval.segmenting_joints, exercise_eval.labels = npzfile['joints'], npzfile['experts'], npzfile['expert_duration'], npzfile['segmenting_joints'], npzfile['labels']
+    
+    exercise_eval.angles = np.empty((0,len(exercise_eval.joints)))
 
-    rospy.sleep(4)
+    #Get joint groups
+    exercise_eval.set_joint_groups()
+    
+    rospy.sleep(5)
 
     inittime = datetime.now(tz)
     
     print('Recording!')
     while (datetime.now(tz) - inittime).total_seconds() < 15:        
             
-        cam_sub.flag = True
+        exercise_eval.flag = True
     
-    cam_sub.flag = False
+    exercise_eval.flag = False
     print('Done with exercise')
-    cam_sub.plot_results()
-    cam_sub.sub.unregister()
+    exercise_eval.plot_results()
+
+    exercise_eval.sub.unregister()
 
     
     
