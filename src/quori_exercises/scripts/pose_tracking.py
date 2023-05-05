@@ -23,10 +23,16 @@ class PoseTracking:
         self.flag = False
         self.joints = [['right_hip', 'right_shoulder', 'right_elbow', 'xy', 'right shoulder'], 
                         ['left_hip', 'left_shoulder', 'left_elbow', 'xy', 'left shoulder'],
-                        ['right_shoulder', 'right_elbow', 'right_wrist', 'xz', 'right elbow'],
+                        ['right_hip', 'right_shoulder', 'right_elbow', 'yz', 'right shoulder'], 
+                        ['left_hip', 'left_shoulder', 'left_elbow', 'yz', 'left shoulder'],
+                        ['right_hip', 'right_shoulder', 'right_elbow', 'xz', 'right shoulder'], 
+                        ['left_hip', 'left_shoulder', 'left_elbow', 'xz', 'left shoulder'],
                         ['right_shoulder', 'right_elbow', 'right_wrist', 'xy', 'right elbow'], 
                         ['left_shoulder', 'left_elbow', 'left_wrist', 'xy', 'left elbow'],
-                        ['left_shoulder', 'left_elbow', 'left_wrist', 'xz', 'left elbow']]
+                        ['right_shoulder', 'right_elbow', 'right_wrist', 'xz', 'right elbow'],
+                        ['left_shoulder', 'left_elbow', 'left_wrist', 'xz', 'left elbow'],
+                        ['right_shoulder', 'right_elbow', 'right_wrist', 'yz', 'right elbow'],
+                        ['left_shoulder', 'left_elbow', 'left_wrist', 'yz', 'left elbow']]
 
     def calc_angle(self, vec_0, vec_1, angle_type):
         if angle_type == 'xy':
@@ -98,11 +104,11 @@ if __name__ == '__main__':
 
     inittime = datetime.now(tz)
     
-    MODE = 'live'
+    MODE = 'live' #live or recording
     if MODE == 'recording':
 
         print('Recording!')
-        while (datetime.now(tz) - inittime).total_seconds() < 30:        
+        while (datetime.now(tz) - inittime).total_seconds() < 15:        
                 
             pose_tracking.flag = True
         

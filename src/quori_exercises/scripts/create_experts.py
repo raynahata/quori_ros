@@ -38,9 +38,9 @@ def check_if_new_peak(angles, grads, peaks, peak_candidate, segmenting_joints):
 
         actual_max_loc = np.where(angles[range_to_check][:,segmenting_joints] == actual_max)[0][0]
         actual_min_loc = np.where(angles[range_to_check][:,segmenting_joints] == actual_min)[0][0]
-        print(actual_max_loc, actual_min_loc)
-        print(range_to_check[max_val], actual_grad_max, actual_grad_min, actual_max, actual_min)
-        print('-')
+        # print(actual_max_loc, actual_min_loc)
+        # print(range_to_check[max_val], actual_grad_max, actual_grad_min, actual_max, actual_min)
+        # print('-')
         if (actual_grad_max > grad_max \
             or actual_grad_min < grad_min) \
                 and actual_max_loc > actual_min_loc:
@@ -80,9 +80,9 @@ def main(exercise_name, filenames, segmenting_joints, labels):
     for filename in filenames:
         file = np.load(filename, allow_pickle=True)
         angles.append(file['angles'])
-        times.append(file['times'])
+        times.extend(file['times'])
     angles = np.vstack(angles)
-    times = np.array(times).flatten()
+    times = np.array(times)
     
     #Find peaks
     peak_candidates, grads = find_peaks(angles, segmenting_joints)
@@ -102,6 +102,7 @@ def main(exercise_name, filenames, segmenting_joints, labels):
         length = (times[end-1] - times[start]).total_seconds()
         if length < 20:
             expert_duration.append(length)
+    print(len(peaks)-1)
     plot_results(angles, peaks, file['joints'])
 
     np.savez('{}_experts.npz'.format(exercise_name), experts=experts,
@@ -113,10 +114,25 @@ def main(exercise_name, filenames, segmenting_joints, labels):
 
 
 if __name__ == '__main__':
-    exercise_name = 'bicep_curls'
-    filenames = ['src/quori_exercises/experts/bicep_curls_demos.npz']
-    segmenting_joints = [2, 3, 4, 5]
-    labels = []
-    for ii in range(10):
-        labels.append('Good')
+    exercise_name = 'lateral_raises'
+    
+    if exercise_name == 'bicep_curls':
+        filenames = ['./experts/bicep_curls_demos.npz']
+        segmenting_joints = [4, 5, 8, 9]
+        labels = []
+        for ii in range(12):
+            labels.append('Good')
+        for ii in range(8):
+            labels.append('low range of motion')
+    
+    else:
+        filenames = ['./experts/lateral_raises_demos.npz', './experts/lateral_raises_demos2.npz']
+        segmenting_joints = [4, 5, 8, 9]
+        labels = []
+        for ii in range(12):
+            labels.append('Good')
+        for ii in range(5):
+            labels.append('low range of motion')
+        for ii in range(5):
+            labels.append('high range of motion')
     main(exercise_name, filenames, segmenting_joints, labels)

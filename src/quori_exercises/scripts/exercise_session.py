@@ -10,12 +10,11 @@ from scipy import signal
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
-import cv2
 
 class ExerciseEval:
 
     def __init__(self):
-        self.sub = rospy.Subscriber("joint_angles", Float64MultiArray, self.callback)
+        self.sub = rospy.Subscriber("joint_angles", Float64MultiArray, self.callback, queue_size=10)
         self.peaks = []
         self.feedback = []
         self.times = []
@@ -44,29 +43,34 @@ class ExerciseEval:
         #Grads, peak_candidates in relative units
 
         if (len(self.peaks) == 0 and index_to_search[peak_candidate] > 15) or (len(self.peaks) > 0 and self.peaks[-1] + 15 < index_to_search[peak_candidate]):
-            range_to_check = np.arange(np.max([peak_candidate-5, 0]), np.min([peak_candidate+5, grads.shape[0]])).astype('int')
+            range_to_check = np.arange(np.max([peak_candidate-2, 0]), np.min([peak_candidate+2, grads.shape[0]])).astype('int')
 
             max_val = np.argmax(grads[range_to_check,:][:,self.segmenting_joints],axis=0)
             max_val = np.mean(max_val).astype('int')
 
-            grad_min = -3
-            grad_max = 3
+            grad_min = -5
+            grad_max = 5
 
             actual_grad_max = np.max(grads[range_to_check][:, self.segmenting_joints])
             actual_grad_min = np.min(grads[range_to_check][:, self.segmenting_joints])
-            actual_max = np.max(self.angles[range_to_check][:,self.segmenting_joints])
-            actual_min = np.min(self.angles[range_to_check][:,self.segmenting_joints])
+            if self.exercise_name == 'bicep_curls':
+                actual_max = np.max(self.angles[range_to_check][:,self.segmenting_joints[[0, 3]]])
+                actual_min = np.min(self.angles[range_to_check][:,self.segmenting_joints[[0, 3]]])
+            else:
+                actual_max = np.max(self.angles[range_to_check][:,self.segmenting_joints])
+                actual_min = np.min(self.angles[range_to_check][:,self.segmenting_joints])
 
             actual_max_loc = np.where(self.angles[range_to_check][:,self.segmenting_joints] == actual_max)[0][0]
             actual_min_loc = np.where(self.angles[range_to_check][:,self.segmenting_joints] == actual_min)[0][0]
-            # print(actual_max_loc, actual_min_loc)
-            # print(range_to_check[max_val], actual_grad_max, actual_grad_min, actual_max, actual_min)
-            # print('-')
             if (actual_grad_max > grad_max \
                 or actual_grad_min < grad_min) \
                     and actual_max_loc > actual_min_loc:
                 
-                return range_to_check[max_val]
+                if (self.exercise_name == 'bicep_curls' and actual_min < 50 and actual_max > 100) or self.exercise_name == 'lateral_raises':
+                    # print(actual_max_loc, actual_min_loc)
+                    # print(range_to_check[max_val], actual_grad_max, actual_grad_min, actual_max, actual_min)
+                    # print('-')
+                    return range_to_check[max_val]
             
         return False
 
@@ -93,11 +97,11 @@ class ExerciseEval:
         for joint_ind in range(len(self.joints)):
             for expert_ind in range(len(self.experts)):
                 current_expert = self.experts[expert_ind][:,joint_ind]
-                distance, _ = fastdtw(current_rep[:, joint_ind], current_expert, dist=euclidean)
+                # distance, _ = fastdtw(current_rep[:, joint_ind], current_expert, dist=euclidean)
+                distance = 0
                 distances[joint_ind, expert_ind] = distance
         
         corrections = []
-        speeds = []
         for joint_group, joints in self.joint_groups.items():
 
             #Get the average distance for each expert
@@ -117,23 +121,26 @@ class ExerciseEval:
                     correction = 'bad'
             else:
                 correction = 'bad'
+            
+            correction += ' {}'.format(joint_group)
             corrections.append(correction)
 
-            if rep_duration > np.mean(self.expert_duration) + 2*np.std(self.expert_duration):
-                speed = 'fast'
-            elif rep_duration < np.mean(self.expert_duration) - 2*np.std(self.expert_duration):
-                speed = 'slow'
-            else:
-                speed = 'good'
-            speeds.append(speed)
         
-        feedback = {'speed': speeds, 'correction': corrections}
+        if rep_duration < np.mean(self.expert_duration) + 2.5*np.std(self.expert_duration):
+            speed = 'fast'
+        elif rep_duration > np.mean(self.expert_duration) - 2.5*np.std(self.expert_duration):
+            speed = 'slow'
+        else:
+            speed = 'good'
+            
+        
+        feedback = {'speed': speed, 'correction': corrections}
 
         return feedback
 
     def callback(self, data):
         if not self.flag:
-            if self.angles.shape[0] > 10 and len(self.peaks) > 0 and self.peaks[-1] < self.angles.shape[0]:
+            if self.angles.shape[0] > 10 and len(self.peaks) > 0 and self.peaks[-1] + 20 < self.angles.shape[0]:
                 #Add last point
                 self.peaks.append(self.angles.shape[0]-1)
 
@@ -168,9 +175,10 @@ class ExerciseEval:
                     #Evaluate new rep
                     if len(self.peaks) > 1:
                         current_rep = self.angles[self.peaks[-2]:self.peaks[-1],:]
-                        rep_duration = (self.times[self.peaks[-2]] - self.times[self.peaks[-1]]).total_seconds()
+                        rep_duration = (self.times[self.peaks[-1]] - self.times[self.peaks[-2]]).total_seconds()
                         feedback = self.evaluate_rep(current_rep, rep_duration)
                         self.feedback.append(feedback)
+                        print(feedback)
 
     def plot_results(self):
         print('Peaks', self.peaks)
@@ -187,21 +195,23 @@ class ExerciseEval:
                     style = '--'
                 else:
                     style = '-'
+                # print(self.feedback, self.joint_to_groups, counter)
                 correction = self.feedback[counter]['correction'][self.joint_to_groups[ii]]
-                if correction == 'Good':
+                if 'Good' in correction:
                     color = 'g'
-                elif correction == 'ok':
+                elif 'ok' in correction:
                     color = 'y'
-                elif correction == 'bad':
+                elif 'bad' in correction:
                     color = 'r'
-                elif correction == 'low range of motion':
+                elif 'low' in correction:
                     color = 'm'
-                elif correction == 'high range of motion':
+                elif 'high' in correction:
                     color = 'b'
                 else:
                     color = 'k' 
 
                 ax[ii].plot(np.arange(start, end), self.angles[start:end,ii], linestyle=style, color=color)
+                
 
                 counter += 1
 
@@ -219,22 +229,11 @@ if __name__ == '__main__':
     #Initialize exercise evaluation variables
     tz = timezone('EST')
 
-    #Walk through an exercise session
-
-    #Consent first
-    quori_sound_pub.publish("When consent is completed, press enter on the keyboard")
-
-    # input("Press Enter to continue to training...")
-
-    #Training next
-    training_message = "Training information here"
-
-    # input("Press Enter to continue to exercises...")
-
     #Start with exercise 1, set 1
     exercise_eval = ExerciseEval()
 
-    exercise_eval.exercise_name = 'bicep_curls'
+    # exercise_eval.exercise_name = 'bicep_curls'
+    exercise_eval.exercise_name = 'lateral_raises'
     
     npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
     
@@ -250,12 +249,19 @@ if __name__ == '__main__':
     inittime = datetime.now(tz)
     
     print('Recording!')
-    while (datetime.now(tz) - inittime).total_seconds() < 15:        
+    while (datetime.now(tz) - inittime).total_seconds() < 45:        
             
         exercise_eval.flag = True
     
     exercise_eval.flag = False
+    print('-----------------')
     print('Done with exercise')
+
+    #Get summary statistics
+    print('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
+    for feedback in exercise_eval.feedback:
+        print(feedback)
+    rospy.sleep(10)
     exercise_eval.plot_results()
 
     exercise_eval.sub.unregister()

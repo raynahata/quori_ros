@@ -7,4 +7,5 @@ build
 logs
 .catkin_tools
 *.bag
+__pycache__/
 
