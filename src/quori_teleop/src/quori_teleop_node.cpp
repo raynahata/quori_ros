@@ -80,6 +80,7 @@ struct XboxControllerState
   double right_trigger_2;
 
   bool a_button;
+  bool x_button;
 
   static XboxControllerState fromJoy(const sensor_msgs::Joy::ConstPtr &msg)
   {
@@ -93,6 +94,7 @@ struct XboxControllerState
 
 
     ret.a_button = msg->buttons[0];
+    ret.x_button = msg->buttons[2];
     ret.left_trigger_1 = msg->buttons[4];
     ret.right_trigger_1 = msg->buttons[5];
 
@@ -137,9 +139,34 @@ void on_joy(const sensor_msgs::Joy::ConstPtr &msg)
   boost::optional<double> right_arm_r1;
   boost::optional<double> right_arm_r2;
   boost::optional<double> waist_hinge;
+  
+  bool pressed = 0;
+  bool stopped = 0;
 
+  if(state.x_button && pressed == 0)
+  {
+    pressed = 1;
+    stopped = ~stopped;
+  }
+  else if(state.x_button == 0 && pressed)
+  {
+    pressed = 0;
+  }
+
+  //E-Stop
+  if(stopped)
+  {
+    left_arm_r1 = left_arm_r1;
+    left_arm_r2 = left_arm_r1;
+    right_arm_r1 = right_arm_r1;
+    right_arm_r2 = right_arm_r2;
+    vel.linear.x = 0;
+    vel.linear.y = 0;
+    vel.angular.z = 0;
+    waist_hinge = waist_hinge;
+  }
   // Left Arm Control
-  if (state.left_trigger_2 < -0.5)
+  else if (state.left_trigger_2 < -0.5)
   {
     std::cout << "Left arm control " << state.left_stick[0] << std::endl;
     left_arm_r1 = state.left_stick[1] * 2 * (state.a_button ? 2 : 1);

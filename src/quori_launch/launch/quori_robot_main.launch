@@ -4,6 +4,7 @@
           <arg name="hardware" value="$(arg hardware)" />
      </include>
 
+<!--
      <include file="$(find
      quori_face_generator)/launch/websocket.launch" />
 
@@ -18,5 +19,6 @@
 
      <include file="$(find
      quori_face)/launch/quori_face.launch" />
+-->
 
 </launch>

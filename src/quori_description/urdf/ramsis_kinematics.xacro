@@ -1,6 +1,12 @@
 <?xml version="1.0"?>
 
 <xacro:macro name="ramsis_kinematics" xmlns:xacro="http://ros.org/wiki/xacro">
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/ramsis</robotNamespace>
+    </plugin>
+  </gazebo>
+
   <material name="ramsis/base_link_material">
     <color rgba="0 0 0 1"/>
   </material>
@@ -90,11 +96,11 @@
   </joint>
 
   <link name="ramsis/wheel_axle">
-    <!-- <inertial>
+    <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="0.00"/>
       <inertia ixx="0.00"  ixy="0"  ixz="0" iyy="0.0" iyz="0" izz="0.0" />
-    </inertial> -->
+    </inertial>
   </link>
 
   <joint name="l_wheel" type="continuous">
