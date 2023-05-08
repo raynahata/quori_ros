@@ -6,6 +6,11 @@ from datetime import datetime
 import numpy as np
 import mediapipe as mp
 from sensor_msgs.msg import Image
+from feat import Detector
+import cv2
+
+import warnings
+warnings.filterwarnings("ignore")
 
 class PoseTracking:
 
@@ -58,7 +63,7 @@ class PoseTracking:
         image = np.frombuffer(data.data, dtype=np.uint8).reshape(
             data.height, data.width, -1)
         results = self.pose_detector.process(image)
-        
+
         if results.pose_landmarks:
             ct = datetime.now(tz)
 
@@ -89,6 +94,29 @@ class PoseTracking:
             angle_pub.publish(angle_msg)
 
 
+class FaceTracking:
+    def __init__(self):
+        self.sub = rospy.Subscriber("/astra_ros/devices/default/color/image_color", Image, self.callback)
+        self.flag = False
+        self.face_detector = Detector(emotion_model='svm')
+        
+    def callback(self, data):
+        if not self.flag:
+            return
+
+        image = np.frombuffer(data.data, dtype=np.uint8).reshape(
+            data.height, data.width, -1)
+        img_path = 'test.png'
+        cv2.imwrite(img_path, image)
+        face_results = self.face_detector.detect_image(img_path)
+        if face_results['FaceScore'].tolist()[0] > 0.5:
+
+            aus = face_results.aus.values.tolist()[0]
+            emotions = face_results.emotions.values.tolist()[0]
+            print(aus+emotions)
+            
+
+
 if __name__ == '__main__':
     
     rospy.init_node('pose_tracking', anonymous=True)
@@ -99,12 +127,13 @@ if __name__ == '__main__':
 
     #Start with exercise 1, set 1
     pose_tracking = PoseTracking()
-    
+    face_tracking = FaceTracking()
     rospy.sleep(5)
 
     inittime = datetime.now(tz)
     
     MODE = 'live' #live or recording
+
     if MODE == 'recording':
 
         print('Recording!')
@@ -124,6 +153,7 @@ if __name__ == '__main__':
                             joints=pose_tracking.joints)
     else:
         pose_tracking.flag = True
+        face_tracking.flag = False
         rospy.spin()
 
     

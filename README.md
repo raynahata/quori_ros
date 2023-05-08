@@ -43,6 +43,7 @@ rosdep update
 rosdep install --from-paths src --ignore-src -r -y
 pip install mediapipe
 pip install fastdtw
+pip install scikit-learn
 ```
 
 7. Build the workspace

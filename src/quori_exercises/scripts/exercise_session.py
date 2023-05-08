@@ -14,18 +14,19 @@ import matplotlib.pyplot as plt
 class ExerciseEval:
 
     def __init__(self):
-        self.sub = rospy.Subscriber("joint_angles", Float64MultiArray, self.callback, queue_size=10)
+        self.pose_sub = rospy.Subscriber("joint_angles", Float64MultiArray, self.pose_callback, queue_size=10)
+        # self.face_sub = rospy.Subscriber("facial_features", Float64MultiArray, self.face_callback, queue_size=10)
         self.peaks = []
         self.feedback = []
         self.times = []
+        self.face_times = []
         self.pose_detector = mp.solutions.pose.Pose(
                     min_detection_confidence=0.5,  # have some confidence baseline
                     min_tracking_confidence=0.5,
                     model_complexity=0,)
         self.flag = False
-        self.threshold1 = 500
-        self.threshold2 = 800
-        self.threshold3 = 800
+        self.threshold1 = 850
+        self.threshold2 = 1200
 
     def find_peaks(self,angles):
         grads = np.zeros_like(angles)
@@ -93,25 +94,29 @@ class ExerciseEval:
         self.joint_to_groups = np.array(joint_to_groups).astype(int)
 
     def evaluate_rep(self, current_rep, rep_duration):
-        distances = np.zeros((len(self.joints), len(self.experts)))
-        for joint_ind in range(len(self.joints)):
-            for expert_ind in range(len(self.experts)):
-                current_expert = self.experts[expert_ind][:,joint_ind]
-                # distance, _ = fastdtw(current_rep[:, joint_ind], current_expert, dist=euclidean)
-                distance = 0
-                distances[joint_ind, expert_ind] = distance
+        #Get expert distances per group
         
         corrections = []
         for joint_group, joints in self.joint_groups.items():
-
-            #Get the average distance for each expert
-            expert_distances = np.mean(distances[joints,:], axis=0)
+            expert_distances = []
+            for expert_ind in range(len(self.experts)):
+                current_expert = self.experts[expert_ind][:,joints]
+                distance, _ = fastdtw(current_rep[:, joints], current_expert, dist=euclidean)
+                expert_distances.append(distance)
         
-            #Get closest expert
-            closest_expert = np.argmin(expert_distances)
-            best_distance = np.min(expert_distances)
+            #Get closest good expert
+            # print(self.good_experts)
+            good_distances = [expert_distances[ii] for ii in self.good_experts]
+            if np.min(good_distances) < self.threshold1:
+                closest_expert = self.good_experts[np.argmin(good_distances)]
+                best_distance = np.min(good_distances)
+            else:
+                closest_expert = np.argmin(expert_distances)
+                best_distance = np.min(expert_distances)
             expert_label = self.labels[closest_expert]
-
+            
+            print(closest_expert, best_distance, expert_label, np.min(good_distances))
+            
             if best_distance < self.threshold1:
                 correction = expert_label
             elif best_distance < self.threshold2:
@@ -138,7 +143,8 @@ class ExerciseEval:
 
         return feedback
 
-    def callback(self, data):
+    def pose_callback(self, angle_data):
+
         if not self.flag:
             if self.angles.shape[0] > 10 and len(self.peaks) > 0 and self.peaks[-1] + 20 < self.angles.shape[0]:
                 #Add last point
@@ -153,7 +159,7 @@ class ExerciseEval:
             return
 
         #Read angle from message
-        angle = data.data
+        angle = angle_data.data
         self.angles = np.vstack((self.angles, angle))
 
         #Get time
@@ -179,6 +185,14 @@ class ExerciseEval:
                         feedback = self.evaluate_rep(current_rep, rep_duration)
                         self.feedback.append(feedback)
                         print(feedback)
+
+    def face_callback(self, face_data):
+        if not self.flag:
+            self.facial_features = np.vstack((self.facial_features, face_data.data))
+
+            time = datetime.now(tz)
+            self.face_times.append(time)
+            print(self.facial_features.shape)
 
     def plot_results(self):
         print('Peaks', self.peaks)
@@ -238,8 +252,11 @@ if __name__ == '__main__':
     npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
     
     exercise_eval.joints, exercise_eval.experts, exercise_eval.expert_duration, exercise_eval.segmenting_joints, exercise_eval.labels = npzfile['joints'], npzfile['experts'], npzfile['expert_duration'], npzfile['segmenting_joints'], npzfile['labels']
-    
+
+    exercise_eval.good_experts = np.array([ii for ii, label in enumerate(exercise_eval.labels) if 'Good' in label]).astype(int)
+
     exercise_eval.angles = np.empty((0,len(exercise_eval.joints)))
+    exercise_eval.facial_features = np.empty((0,27))
 
     #Get joint groups
     exercise_eval.set_joint_groups()
@@ -249,7 +266,7 @@ if __name__ == '__main__':
     inittime = datetime.now(tz)
     
     print('Recording!')
-    while (datetime.now(tz) - inittime).total_seconds() < 45:        
+    while (datetime.now(tz) - inittime).total_seconds() < 30:        
             
         exercise_eval.flag = True
     
@@ -258,13 +275,15 @@ if __name__ == '__main__':
     print('Done with exercise')
 
     #Get summary statistics
+    rospy.sleep(10)
     print('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
     for feedback in exercise_eval.feedback:
         print(feedback)
-    rospy.sleep(10)
+    print('Total Angles {}, Total Facial Features {}'.format(exercise_eval.angles.shape[0], exercise_eval.facial_features.shape[0]))
     exercise_eval.plot_results()
 
-    exercise_eval.sub.unregister()
+    exercise_eval.pose_sub.unregister()
+    # exercise_eval.face_sub.unregister()
 
     
     
