@@ -137,7 +137,7 @@ if __name__ == '__main__':
     if MODE == 'recording':
 
         print('Recording!')
-        while (datetime.now(tz) - inittime).total_seconds() < 15:        
+        while (datetime.now(tz) - inittime).total_seconds() < 60:        
                 
             pose_tracking.flag = True
         

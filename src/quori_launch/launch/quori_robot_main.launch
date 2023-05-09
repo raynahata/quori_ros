@@ -8,18 +8,18 @@
      quori_face_generator)/launch/websocket.launch" /> -->
 
      <!--- <node pkg="quori_controller"
-          name="quori_body_face" type="quori_body_face.py" output="screen" />
+          name="quori_body_face" type="quori_body_face.py" output="screen" /> -->
 
-     <node pkg="quori_controller"
-          name="quori_neutral" type="quori_neutral.py" output="screen" />
+     <!--- <node pkg="quori_controller"
+          name="quori_neutral" type="quori_neutral.py" output="screen" /> -->
 
      <node pkg="sound_play"
           name="sound_play" type="soundplay_node.py" output="screen" />
 
      <node pkg="quori_controller"
-          name="quori_sound" type="quori_sound.py" output="screen" /> -->
+          name="quori_sound" type="quori_sound.py" output="screen" />
 
-     <!-- <include file="$(find astra_ros)/launch/default.launch" /> -->
+     <include file="$(find astra_ros)/launch/default.launch" /> 
 
      <!-- <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
           <remap from="image" to="/astra_ros/devices/default/color/image_color" />

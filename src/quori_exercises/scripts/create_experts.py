@@ -126,13 +126,13 @@ if __name__ == '__main__':
             labels.append('low range of motion')
     
     else:
-        filenames = ['./experts/lateral_raises_demos.npz', './experts/lateral_raises_demos2.npz']
+        filenames = ['./experts/lateral_raises_demos3.npz']
         segmenting_joints = [4, 5, 8, 9]
         labels = []
-        for ii in range(12):
+        for ii in range(10):
             labels.append('Good')
         for ii in range(5):
             labels.append('low range of motion')
-        for ii in range(5):
+        for ii in range(2):
             labels.append('high range of motion')
     main(exercise_name, filenames, segmenting_joints, labels)

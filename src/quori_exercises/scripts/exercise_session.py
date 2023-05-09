@@ -10,6 +10,13 @@ from scipy import signal
 from fastdtw import fastdtw
 from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
+import logging
+import sys
+
+PARTICIPANT_ID = 1
+ROUND_NUM = 1
+ROBOT_NUM = 1
+EXERCISE_LENGTH = 15
 
 class ExerciseEval:
 
@@ -25,8 +32,9 @@ class ExerciseEval:
                     min_tracking_confidence=0.5,
                     model_complexity=0,)
         self.flag = False
-        self.threshold1 = 850
-        self.threshold2 = 1200
+        self.threshold1 = [850, 1200]
+        self.threshold2 = [1200, 1700]
+        self.threshold3 = 700
 
     def find_peaks(self,angles):
         grads = np.zeros_like(angles)
@@ -36,7 +44,6 @@ class ExerciseEval:
             if joint_ind in self.segmenting_joints:
                 peaks.append(signal.find_peaks(grads[:, joint_ind], height=1.5, distance=20, prominence=0.5)[0].astype('int'))
         peaks = np.sort(np.concatenate(peaks))
-        # print('Peaks', peaks)
         return peaks, grads
 
     def check_if_new_peak(self, grads, peak_candidate, index_to_search):
@@ -68,9 +75,6 @@ class ExerciseEval:
                     and actual_max_loc > actual_min_loc:
                 
                 if (self.exercise_name == 'bicep_curls' and actual_min < 50 and actual_max > 100) or self.exercise_name == 'lateral_raises':
-                    # print(actual_max_loc, actual_min_loc)
-                    # print(range_to_check[max_val], actual_grad_max, actual_grad_min, actual_max, actual_min)
-                    # print('-')
                     return range_to_check[max_val]
             
         return False
@@ -105,9 +109,15 @@ class ExerciseEval:
                 expert_distances.append(distance)
         
             #Get closest good expert
-            # print(self.good_experts)
+            if self.exercise_name == 'bicep_curls':
+                threshold1 = self.threshold1[0]
+                threshold2 = self.threshold2[0]
+            else:
+                threshold1 = self.threshold1[1]
+                threshold2 = self.threshold2[1]
             good_distances = [expert_distances[ii] for ii in self.good_experts]
-            if np.min(good_distances) < self.threshold1:
+            
+            if np.min(good_distances) < threshold1 and np.min(expert_distances) > self.threshold3:
                 closest_expert = self.good_experts[np.argmin(good_distances)]
                 best_distance = np.min(good_distances)
             else:
@@ -115,11 +125,11 @@ class ExerciseEval:
                 best_distance = np.min(expert_distances)
             expert_label = self.labels[closest_expert]
             
-            print(closest_expert, best_distance, expert_label, np.min(good_distances))
+            logger.info('Closest good expert {}, Closest All expert {}, Closest expert label {}'.format(np.min(good_distances), np.min(expert_distances), self.labels[np.argmin(expert_distances)]))
             
-            if best_distance < self.threshold1:
+            if best_distance < threshold1:
                 correction = expert_label
-            elif best_distance < self.threshold2:
+            elif best_distance < threshold2:
                 if expert_label == 'Good':
                     correction = 'ok'
                 else:
@@ -177,14 +187,15 @@ class ExerciseEval:
                 res = self.check_if_new_peak(grads, peak_candidate, index_to_search)
                 if res:
                     self.peaks.append(index_to_search[res])
-                    print(self.peaks[-1])
+                    logger.info('Current peak {}'.format(self.peaks[-1]))
+
                     #Evaluate new rep
                     if len(self.peaks) > 1:
                         current_rep = self.angles[self.peaks[-2]:self.peaks[-1],:]
                         rep_duration = (self.times[self.peaks[-1]] - self.times[self.peaks[-2]]).total_seconds()
                         feedback = self.evaluate_rep(current_rep, rep_duration)
                         self.feedback.append(feedback)
-                        print(feedback)
+                        logger.info('Feedback: {}'.format(feedback))
 
     def face_callback(self, face_data):
         if not self.flag:
@@ -195,7 +206,6 @@ class ExerciseEval:
             print(self.facial_features.shape)
 
     def plot_results(self):
-        print('Peaks', self.peaks)
 
         fig, ax = plt.subplots(self.angles.shape[1], sharex=True, sharey=True)
 
@@ -209,7 +219,6 @@ class ExerciseEval:
                     style = '--'
                 else:
                     style = '-'
-                # print(self.feedback, self.joint_to_groups, counter)
                 correction = self.feedback[counter]['correction'][self.joint_to_groups[ii]]
                 if 'Good' in correction:
                     color = 'g'
@@ -232,6 +241,30 @@ class ExerciseEval:
             ax[ii].set_title('{}-{}-{}-{}'.format(self.joints[ii][0], self.joints[ii][1], self.joints[ii][2], self.joints[ii][3]))
         plt.show()
 
+def plot_from_file(filename):
+
+    data_file = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/saved_data/{}'.format(filename), allow_pickle=True)
+
+    exercise_eval = ExerciseEval()
+    
+    exercise_eval.exercise_name = data_file['exercise_name']
+
+    npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
+    
+    exercise_eval.joints, exercise_eval.experts, exercise_eval.expert_duration, exercise_eval.segmenting_joints, exercise_eval.labels = npzfile['joints'], npzfile['experts'], npzfile['expert_duration'], npzfile['segmenting_joints'], npzfile['labels']
+
+    exercise_eval.angles = data_file['angles']
+    exercise_eval.facial_features = data_file['facial_features']
+    exercise_eval.peaks=data_file['peaks']
+    exercise_eval.feedback=data_file['feedback']
+    exercise_eval.times=data_file['times']
+    exercise_eval.face_times=data_file['face_times']
+
+    #Get joint groups
+    exercise_eval.set_joint_groups()
+
+    exercise_eval.plot_results()
+
 if __name__ == '__main__':
     
     rospy.init_node('exercise_session', anonymous=True)
@@ -243,47 +276,109 @@ if __name__ == '__main__':
     #Initialize exercise evaluation variables
     tz = timezone('EST')
 
-    #Start with exercise 1, set 1
-    exercise_eval = ExerciseEval()
+    from_file_flag = False
+    SET_NUM = 1
+    EXERCISE_NAME = 'bicep_curls'
 
-    # exercise_eval.exercise_name = 'bicep_curls'
-    exercise_eval.exercise_name = 'lateral_raises'
-    
-    npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
-    
-    exercise_eval.joints, exercise_eval.experts, exercise_eval.expert_duration, exercise_eval.segmenting_joints, exercise_eval.labels = npzfile['joints'], npzfile['experts'], npzfile['expert_duration'], npzfile['segmenting_joints'], npzfile['labels']
+    data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
 
-    exercise_eval.good_experts = np.array([ii for ii, label in enumerate(exercise_eval.labels) if 'Good' in label]).astype(int)
+    if from_file_flag:
+        plot_from_file(data_filename)
+    else:
+        for EXERCISE_NAME in ['bicep_curls', 'lateral_raises']:
+            for SET_NUM in range(1, 2):
+                data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
 
-    exercise_eval.angles = np.empty((0,len(exercise_eval.joints)))
-    exercise_eval.facial_features = np.empty((0,27))
+                log_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.log'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
 
-    #Get joint groups
-    exercise_eval.set_joint_groups()
-    
-    rospy.sleep(5)
+                logger = logging.getLogger()
+                formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
 
-    inittime = datetime.now(tz)
-    
-    print('Recording!')
-    while (datetime.now(tz) - inittime).total_seconds() < 30:        
-            
-        exercise_eval.flag = True
-    
-    exercise_eval.flag = False
-    print('-----------------')
-    print('Done with exercise')
+                stdout_handler = logging.StreamHandler(sys.stdout)
+                stdout_handler.setLevel(logging.DEBUG)
+                stdout_handler.setFormatter(formatter)
 
-    #Get summary statistics
-    rospy.sleep(10)
-    print('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
-    for feedback in exercise_eval.feedback:
-        print(feedback)
-    print('Total Angles {}, Total Facial Features {}'.format(exercise_eval.angles.shape[0], exercise_eval.facial_features.shape[0]))
-    exercise_eval.plot_results()
+                file_handler = logging.FileHandler('/home/quori4/quori_files/quori_ros/src/quori_exercises/saved_logs/{}'.format(log_filename))
+                file_handler.setFormatter(formatter)
 
-    exercise_eval.pose_sub.unregister()
-    # exercise_eval.face_sub.unregister()
+                logger.addHandler(file_handler)
+                logger.addHandler(stdout_handler)
+                 
+
+                logger.info('=====================================')
+                logger.info('STARTING SET {} OF {}'.format(SET_NUM, EXERCISE_NAME))
+                logger.info('=====================================')
+
+                #Robot says starting set
+                robot_message = "Get ready for set %s out of %s of %s" % (SET_NUM,
+                                                                    2, EXERCISE_NAME)
+                logger.info('Robot says: {}'.format(robot_message))
+                quori_sound_pub.publish(robot_message)
+
+                exercise_eval = ExerciseEval()
+
+                exercise_eval.exercise_name = EXERCISE_NAME
+                
+                npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
+                
+                exercise_eval.joints, exercise_eval.experts, exercise_eval.expert_duration, exercise_eval.segmenting_joints, exercise_eval.labels = npzfile['joints'], npzfile['experts'], npzfile['expert_duration'], npzfile['segmenting_joints'], npzfile['labels']
+
+                exercise_eval.good_experts = np.array([ii for ii, label in enumerate(exercise_eval.labels) if 'Good' in label]).astype(int)
+
+                exercise_eval.angles = np.empty((0,len(exercise_eval.joints)))
+                exercise_eval.facial_features = np.empty((0,27))
+
+                #Get joint groups
+                exercise_eval.set_joint_groups()
+                
+                rospy.sleep(8)
+
+                inittime = datetime.now(tz)
+                
+                #Robot says starting set
+                robot_message = "Start %s now" % (EXERCISE_NAME)
+                logger.info('Robot says: {}'.format(robot_message))
+                quori_sound_pub.publish(robot_message)
+
+                logger.info('-------Recording!')
+                half_message = False
+                while (datetime.now(tz) - inittime).total_seconds() < EXERCISE_LENGTH:        
+                        
+                    exercise_eval.flag = True
+                    if (datetime.now(tz) - inittime).total_seconds() > EXERCISE_LENGTH/2 and not half_message:
+                        robot_message = "Halfway"
+                        logger.info('Robot says: {}'.format(robot_message))
+                        quori_sound_pub.publish(robot_message)
+                        half_message = True
+                
+                robot_message = "Rest"
+                logger.info('Robot says: {}'.format(robot_message))
+                quori_sound_pub.publish(robot_message)
+
+                exercise_eval.flag = False
+                logger.info('-------Done with exercise')
+
+                #Get summary statistics
+                logger.info('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
+
+                logger.info('Total Angles {}, Total Facial Features {}'.format(exercise_eval.angles.shape[0], exercise_eval.facial_features.shape[0]))
+
+                exercise_eval.pose_sub.unregister()
+
+                np.savez('/home/quori4/quori_files/quori_ros/src/quori_exercises/saved_data/{}'.format(data_filename),      
+                                        angles=exercise_eval.angles,
+                                        facial_features=exercise_eval.facial_features,
+                                        peaks=exercise_eval.peaks,
+                                        feedback=exercise_eval.feedback,
+                                        times=exercise_eval.times,
+                                        face_times=exercise_eval.face_times,
+                                        exercise_name=EXERCISE_NAME
+                                    )
+                logger.info('Saved file {}'.format(data_filename))
+
+                logging.shutdown()
+
+                rospy.sleep(10)
 
     
     
