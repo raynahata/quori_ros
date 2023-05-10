@@ -6,8 +6,7 @@ from datetime import datetime
 import numpy as np
 import mediapipe as mp
 from sensor_msgs.msg import Image
-from feat import Detector
-import cv2
+from fer import FER
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -98,7 +97,7 @@ class FaceTracking:
     def __init__(self):
         self.sub = rospy.Subscriber("/astra_ros/devices/default/color/image_color", Image, self.callback)
         self.flag = False
-        self.face_detector = Detector(emotion_model='svm')
+        self.face_detector = FER()
         
     def callback(self, data):
         if not self.flag:
@@ -106,14 +105,15 @@ class FaceTracking:
 
         image = np.frombuffer(data.data, dtype=np.uint8).reshape(
             data.height, data.width, -1)
-        img_path = 'test.png'
-        cv2.imwrite(img_path, image)
-        face_results = self.face_detector.detect_image(img_path)
-        if face_results['FaceScore'].tolist()[0] > 0.5:
+        
+        face_results = self.face_detector.detect_emotions(image)
+        if len(face_results) > 0:
+            emotion_names = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
+            emotions = [face_results[0]['emotions'][e] for e in emotion_names]
 
-            aus = face_results.aus.values.tolist()[0]
-            emotions = face_results.emotions.values.tolist()[0]
-            print(aus+emotions)
+            emotion_msg = Float64MultiArray()
+            emotion_msg.data = emotions
+            angle_pub.publish(emotion_msg)
             
 
 
@@ -153,7 +153,7 @@ if __name__ == '__main__':
                             joints=pose_tracking.joints)
     else:
         pose_tracking.flag = True
-        face_tracking.flag = False
+        face_tracking.flag = True
         rospy.spin()
 
     

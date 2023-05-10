@@ -25,6 +25,6 @@
           <remap from="image" to="/astra_ros/devices/default/color/image_color" />
      </node> -->
 
-     <!-- <node pkg="quori_exercises" name="exercise_evaluation" type="exercise_evaluation.py" output="screen" /> -->
+     <node pkg="quori_exercises" name="pose_tracking" type="pose_tracking.py" output="screen" />
 
 </launch>
