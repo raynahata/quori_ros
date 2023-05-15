@@ -113,7 +113,7 @@ class FaceTracking:
 
             emotion_msg = Float64MultiArray()
             emotion_msg.data = emotions
-            angle_pub.publish(emotion_msg)
+            face_pub.publish(emotion_msg)
             
 
 
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     rospy.init_node('pose_tracking', anonymous=True)
     
     angle_pub = rospy.Publisher('joint_angles', Float64MultiArray, queue_size=10)
-
+    face_pub = rospy.Publisher('facial_features', Float64MultiArray, queue_size=10)
     tz = timezone('EST')
 
     #Start with exercise 1, set 1
@@ -153,7 +153,7 @@ if __name__ == '__main__':
                             joints=pose_tracking.joints)
     else:
         pose_tracking.flag = True
-        face_tracking.flag = False
+        face_tracking.flag = True
         rospy.spin()
 
     

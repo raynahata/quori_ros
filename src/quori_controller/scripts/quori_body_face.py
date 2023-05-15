@@ -65,7 +65,7 @@ def callback(data):
         start_position = (neutral_positions + (b-a) * np.random.random_sample((5,)) + a).tolist()
         end_position = (neutral_positions + (b-a) * np.random.random_sample((5,)) + a).tolist()
 
-        neutral_emotion = np.zeros((6,))
+        neutral_emotion = np.array([0.1, 0, 0, 0, 0, 0])
         a = 0
         b = 0.1
         start_emotion = (neutral_emotion + (b-a) * np.random.random_sample((6,)) + a).tolist()

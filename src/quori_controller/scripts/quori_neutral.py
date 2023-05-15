@@ -6,7 +6,7 @@ from std_msgs.msg import Float64MultiArray
 def talker():
     pub = rospy.Publisher("quori_body_face", Float64MultiArray, queue_size=1)
     rospy.init_node('quori_neutral', anonymous=True)
-    rate = rospy.Rate(0.25)
+    rate = rospy.Rate(0.5)
     body_face_msg = Float64MultiArray()
     body_face_msg.data = [0, 1, 2]
     while not rospy.is_shutdown():

@@ -1,23 +1,17 @@
 <launch>
-     <!-- <arg name="hardware" default="true" />
+     <arg name="hardware" default="false" />
      <include file="$(find quori_controller)/launch/quori_control_diff.launch">
           <arg name="hardware" value="$(arg hardware)" />
-     </include> -->
+     </include>
 
-     <!-- <include file="$(find
-     quori_face_generator)/launch/websocket.launch" /> -->
-
-     <!--- <node pkg="quori_controller"
-          name="quori_body_face" type="quori_body_face.py" output="screen" /> -->
-
-     <!--- <node pkg="quori_controller"
-          name="quori_neutral" type="quori_neutral.py" output="screen" /> -->
-
-     <node pkg="sound_play"
-          name="sound_play" type="soundplay_node.py" output="screen" />
+     <include file="$(find
+     quori_face_generator)/launch/websocket.launch" />
 
      <node pkg="quori_controller"
-          name="quori_sound" type="quori_sound.py" output="screen" />
+          name="quori_body_face" type="quori_body_face.py" output="screen" />
+
+     <node pkg="quori_controller"
+          name="quori_neutral" type="quori_neutral.py" output="screen" />
 
      <include file="$(find astra_ros)/launch/default.launch" /> 
 
