@@ -12,7 +12,7 @@ from scipy.spatial.distance import euclidean
 import matplotlib.pyplot as plt
 import logging
 import sys
-import pyttsx3
+
 
 PARTICIPANT_ID = '1'
 ROUND_NUM = 1
@@ -183,8 +183,8 @@ class ExerciseEval:
                 
                 robot_message = "Rep"
                 logger.info('Robot says: {}'.format(robot_message))
-                engine.say(robot_message)
-                engine.runAndWait()
+                # engine.say(robot_message)
+                # engine.runAndWait()
             return
 
         #Read angle from message
@@ -220,8 +220,8 @@ class ExerciseEval:
                         
                         robot_message = "Rep"
                         logger.info('Robot says: {}'.format(robot_message))
-                        engine.say(robot_message)
-                        engine.runAndWait()
+                        # engine.say(robot_message)
+                        # engine.runAndWait()
 
 
     def reeval(self):
@@ -251,7 +251,6 @@ class ExerciseEval:
 
             time = datetime.now(tz)
             self.face_times.append(time)
-            print(self.facial_features.shape)
 
     def plot_results(self):
 
@@ -306,8 +305,8 @@ class ExerciseEval:
             #Robot says
             robot_message = "Great job"
             logger.info('Robot says: {}'.format(robot_message))
-            engine.say(robot_message)
-            engine.runAndWait()
+            # engine.say(robot_message)
+            # engine.runAndWait()
 
 
 def from_file(filename, re_eval):
@@ -354,7 +353,7 @@ if __name__ == '__main__':
 
     #Initialize the publishers/subscribers
     quori_body_face_pub = rospy.Publisher("quori_body_face", Float64MultiArray, queue_size=2)
-    engine = pyttsx3.init()
+    quori_sound_pub = rospy.Publisher("quori_sound", String, queue_size=1)
     
     #Initialize the timezone
     tz = timezone('EST')
@@ -393,7 +392,7 @@ if __name__ == '__main__':
                 stdout_handler = logging.StreamHandler(sys.stdout)
                 stdout_handler.setLevel(logging.DEBUG)
                 stdout_handler.setFormatter(formatter)
-                file_handler = logging.FileHandler('/home/quori4/quori_files/quori_ros/src/quori_exercises/saved_logs/{}'.format(log_filename))
+                file_handler = logging.FileHandler('src/quori_exercises/saved_logs/{}'.format(log_filename))
                 file_handler.setFormatter(formatter)
                 logger.addHandler(file_handler)
                 logger.addHandler(stdout_handler)
@@ -407,84 +406,84 @@ if __name__ == '__main__':
                 robot_message = "Get ready for set %s out of %s of %s" % (SET_NUM,
                                                                     NUM_SETS, EXERCISE_NAME.replace("_", " " ))
                 logger.info('Robot says: {}'.format(robot_message))
-                engine.say(robot_message)
-                engine.runAndWait()
-
-                rospy.sleep(2)
                 
-                exercise_eval = ExerciseEval()
+                quori_sound_pub.publish(robot_message)
 
-                exercise_eval.exercise_name = EXERCISE_NAME
                 
-                npzfile = np.load('/home/quori4/quori_files/quori_ros/src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
+                # exercise_eval = ExerciseEval()
+
+                # exercise_eval.exercise_name = EXERCISE_NAME
                 
-                exercise_eval.joints, exercise_eval.experts, exercise_eval.expert_duration, exercise_eval.segmenting_joints, exercise_eval.labels = npzfile['joints'], npzfile['experts'], npzfile['expert_duration'], npzfile['segmenting_joints'], npzfile['labels']
-
-                exercise_eval.good_experts = np.array([ii for ii, label in enumerate(exercise_eval.labels) if 'Good' in label]).astype(int)
-
-                if exercise_eval.exercise_name == 'lateral_raises':
-                    exercise_eval.segmenting_joints = [0] + exercise_eval.segmenting_joints
-
-                exercise_eval.angles = np.empty((0,len(exercise_eval.joints)))
-                exercise_eval.facial_features = np.empty((0,7))
-
-                #Get joint groups
-                exercise_eval.set_joint_groups()
-                exercise_eval.performance = np.empty((0, len(exercise_eval.joint_groups)))
+                # npzfile = np.load('src/quori_exercises/experts/{}_experts.npz'.format(exercise_eval.exercise_name), allow_pickle=True)
                 
-                rospy.sleep(4)
+                # exercise_eval.joints, exercise_eval.experts, exercise_eval.expert_duration, exercise_eval.segmenting_joints, exercise_eval.labels = npzfile['joints'], npzfile['experts'], npzfile['expert_duration'], npzfile['segmenting_joints'], npzfile['labels']
 
-                #Robot says starting set
-                robot_message = "Start %s now" % (EXERCISE_NAME.replace("_", " " ))
-                logger.info('Robot says: {}'.format(robot_message))
-                engine.say(robot_message)
-                engine.runAndWait()
-                rospy.sleep(3)
+                # exercise_eval.good_experts = np.array([ii for ii, label in enumerate(exercise_eval.labels) if 'Good' in label]).astype(int)
 
-                inittime = datetime.now(tz)
-                logger.info('-------------------Recording!')
-                half_message = False
-                while (datetime.now(tz) - inittime).total_seconds() < EXERCISE_LENGTH:        
+                # if exercise_eval.exercise_name == 'lateral_raises':
+                #     exercise_eval.segmenting_joints = [0] + exercise_eval.segmenting_joints
+
+                # exercise_eval.angles = np.empty((0,len(exercise_eval.joints)))
+                # exercise_eval.facial_features = np.empty((0,7))
+
+                # #Get joint groups
+                # exercise_eval.set_joint_groups()
+                # exercise_eval.performance = np.empty((0, len(exercise_eval.joint_groups)))
+                
+
+                # # # rospy.sleep(4)
+
+                # # #Robot says starting set
+                # # robot_message = "Start %s now" % (EXERCISE_NAME.replace("_", " " ))
+                # # logger.info('Robot says: {}'.format(robot_message))
+                # # # engine.say(robot_message)
+                # # # engine.runAndWait()
+                # rospy.sleep(3)
+
+                # inittime = datetime.now(tz)
+                # logger.info('-------------------Recording!')
+                # half_message = False
+                # while (datetime.now(tz) - inittime).total_seconds() < EXERCISE_LENGTH:        
                         
-                    exercise_eval.flag = True
-                    if (datetime.now(tz) - inittime).total_seconds() > EXERCISE_LENGTH/2 and not half_message:
-                        robot_message = "Halfway"
-                        logger.info('Robot says: {}'.format(robot_message))
-                        engine.say(robot_message)
-                        engine.runAndWait()
-                        half_message = True
+                #     exercise_eval.flag = True
+                #     if (datetime.now(tz) - inittime).total_seconds() > EXERCISE_LENGTH/2 and not half_message:
+                #         robot_message = "Halfway"
+                #         logger.info('Robot says: {}'.format(robot_message))
+                #         # engine.say(robot_message)
+                #         # engine.runAndWait()
+                #         half_message = True
                 
-                robot_message = "Rest"
-                logger.info('Robot says: {}'.format(robot_message))
-                engine.say(robot_message)
-                engine.runAndWait()
+                # robot_message = "Rest"
+                # logger.info('Robot says: {}'.format(robot_message))
+                # # engine.say(robot_message)
+                # # engine.runAndWait()
 
-                exercise_eval.flag = False
-                logger.info('-------------------Done with exercise')
+                # exercise_eval.flag = False
+                # logger.info('-------------------Done with exercise')
 
-                #Get summary statistics
-                logger.info('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
+                # #Get summary statistics
+                # logger.info('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
 
-                logger.info('Total Angles {}, Total Facial Features {}'.format(exercise_eval.angles.shape[0], exercise_eval.facial_features.shape[0]))
+                # logger.info('Total Angles {}, Total Facial Features {}'.format(exercise_eval.angles.shape[0], exercise_eval.facial_features.shape[0]))
 
-                exercise_eval.pose_sub.unregister()
-                exercise_eval.face_sub.unregister()
+                # exercise_eval.pose_sub.unregister()
+                # exercise_eval.face_sub.unregister()
                 
-                data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
-                # np.savez('/home/quori4/quori_files/quori_ros/src/quori_exercises/saved_data/{}'.format(data_filename),      
-                #                         angles=exercise_eval.angles,
-                #                         facial_features=exercise_eval.facial_features,
-                #                         peaks=exercise_eval.peaks,
-                #                         feedback=exercise_eval.feedback,
-                #                         times=exercise_eval.times,
-                #                         face_times=exercise_eval.face_times,
-                #                         exercise_name=EXERCISE_NAME
-                #                     )
-                logger.info('Saved file {}'.format(data_filename))
+                # data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
+                # # np.savez('/home/quori4/quori_files/quori_ros/src/quori_exercises/saved_data/{}'.format(data_filename),      
+                # #                         angles=exercise_eval.angles,
+                # #                         facial_features=exercise_eval.facial_features,
+                # #                         peaks=exercise_eval.peaks,
+                # #                         feedback=exercise_eval.feedback,
+                # #                         times=exercise_eval.times,
+                # #                         face_times=exercise_eval.face_times,
+                # #                         exercise_name=EXERCISE_NAME
+                # #                     )
+                # logger.info('Saved file {}'.format(data_filename))
 
-                logging.shutdown()
+                # logging.shutdown()
 
-                rospy.sleep(10)
+                # rospy.sleep(10)
 
     
     
