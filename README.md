@@ -59,6 +59,9 @@ source devel/setup.bash
 ## Each new terminal
 ```
 cd quori_files/quori_ros
+export ROS_IP=$(hostname -I | awk '{print $1;}')
+export ROS_MASTER_URI=http://quori.wifi.local.cmu.edu:11311
+export ROS_HOSTNAME=$ROS_IP
 source devel/setup.bash
 ```
 
