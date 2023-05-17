@@ -63,6 +63,7 @@ export ROS_IP=$(hostname -I | awk '{print $1;}')
 export ROS_MASTER_URI=http://quori.wifi.local.cmu.edu:11311
 export ROS_HOSTNAME=$ROS_IP
 source devel/setup.bash
+rosrun quori_exercises exercise_session.py
 ```
 
 ## Set-up sound
