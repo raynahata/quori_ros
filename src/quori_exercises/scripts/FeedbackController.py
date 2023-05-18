@@ -121,7 +121,7 @@ class FeedbackController:
             if len(bad_joints) > 0:
                 #Check if next one is good or ok
                 if np.min(feedback[-1]['evaluation']) >= 0:
-                   c= '2a'
+                   c = '2a'
         
         #Case 2b: 3 good eval in a row
         if len(feedback) >= 3:
@@ -139,21 +139,21 @@ class FeedbackController:
         return c
 
     def find_speed_case(self, feedback):
-       c= ''
+       c = ''
 
         #Case 3: 2 bad in a row per joint
         if len(feedback) >= 2:
             if feedback[-2]['speed'] == 'fast' and feedback[-1]['speed'] == 'fast':
-                pass
+                c = '3a'
             if feedback[-2]['speed'] == 'slow' and feedback[-1]['speed'] == 'slow':
-                pass
+                c = '3b'
+                
         
-
         #Case 4a: 2 bad speed followed by 2 good speed
         if len(feedback) >= 4:
 
             if not feedback[-4]['speed'] == 'good' and not feedback[-3]['speed'] == 'good' and feedback[-2]['speed'] == 'good' and feedback[-1]['speed'] == 'good':
-               c= '4a'
+               c = '4a'
         
         #Case 4b: 4 good speed in row
         if len(feedback) >= 3:
@@ -284,20 +284,99 @@ class FeedbackController:
                         options = ['Focus on getting a full range of motion in your shoulders', 'Make sure your arms are getting a full range of motion.']
                     elif robot_num == 3:
                         options = ['Great work, try to focus a bit more on your shoulders', 'Nice job, try to focus on your shoulders a little more']
-                
-
+            case '2a': #2 bad followed by good
+                if robot_num == 1:
+                    options = ['']
+                elif robot_num == 2:
+                    options = ['Form is good, keep it up', 'Form looks good, keep going']
+                elif robot_num == 3:
+                    options = ['Look good, great job!', 'Great work, looking good!']
+            case '2b': #4 good - but only every 3 or so
+                if robot_num == 1:
+                    options = ['']
+                elif robot_num == 2:
+                    options = ['Form is good, keep it up', 'Form looks good, keep going']
+                elif robot_num == 3:
+                    options = ['Look good, great job!', 'Great work, looking good!']
+            case '3a': #2 fast in a row
+                if robot_num == 1:
+                    options = ['']
+                elif robot_num == 2:
+                    options = ['Try to slow down', 'Make sure you do not go too fast']
+                elif robot_num == 3:
+                    options = ['Nice job, can you slow down a little on the next few?', 'Great work, can you try to slow down on the next few?']
+            case '3b': #2 slow in a row
+                if robot_num == 1:
+                    options = ['']
+                elif robot_num == 2:
+                    options = ['Try to speed up', 'Make sure you do not go too slow']
+                elif robot_num == 3:
+                    options = ['Nice job, can you speed up a little on the next few?', 'Great work, can you try to speed up on the next few?']
+            case '4a': #2 bad followed by 1 good speed
+                if robot_num == 1:
+                    options = ['']
+                elif robot_num == 2:
+                    options = ['Great speed, keep it up', 'Nice speed, keep going']
+                elif robot_num == 3:
+                    options = ['Great work, nice pace', 'Nice job, great speed']
+            case '4b': #4 good speed, but only every 3 or so
+                if robot_num == 1:
+                    options = ['']
+                elif robot_num == 2:
+                    options = ['Great speed, keep it up', 'Nice speed, keep going']
+                elif robot_num == 3:
+                    options = ['Great work, nice pace', 'Nice job, great speed']
+            case other:
+                options = ['']
+        
+        
+        if len(options) > 0:
+            #Pick the option that has been chosen the least
+            counts = []
+            for option in options:
+                if option in self.message_log:
+                    counts.append(self.message_log.count(option))
+                else:
+                    counts.append(0)
+            
+            #Get the minimum count
+            ind = np.argmin(counts)
+            
+            return options[ind]
+        
+        return ''
 
     def react(self, feedback, exercise_name):
 
-        #Nonverbal
 
-        #Smile if the last rep was overall good
-        if np.sum(feedback[-1]['evaluation']):
-            self.logger.info('Robot smiles')
+        #Nonverbal
+        
+        #If last rep was overall good and good speed
+        if np.sum(feedback[-1]['evaluation']) and feedback[-1]['speed'] == 'good':
+            self.logger.info('Good evaluation and speed, robot smiles')
             if not self.replay:
                 body_face_msg = Float64MultiArray()
-                body_face_msg.data = [1, 0.5, 1]
+                body_face_msg.data = [1, 0.7, 2]
                 self.body_face_pub.publish(body_face_msg)
+                
+        #If last rep was overall good but not good speed
+        elif np.sum(feedback[-1]['evaluation']):
+            self.logger.info('Good evaluation, but not good speed, robot smiles')
+            if not self.replay:
+                body_face_msg = Float64MultiArray()
+                body_face_msg.data = [1, 0.5, 2]
+                self.body_face_pub.publish(body_face_msg)
+        
+        elif feedback[-1]['speed'] == 'good':
+            self.logger.info('Good speed, but not good evaluation, robot smiles')
+            if not self.replay:
+                body_face_msg = Float64MultiArray()
+                body_face_msg.data = [1, 0.5, 2]
+                self.body_face_pub.publish(body_face_msg)
+        
+        else:
+            self.logger.info('Bad evaluation and speed, robot neutral')
+            
         
         # Verbal
         self.message('Rep')
@@ -308,12 +387,18 @@ class FeedbackController:
         self.speed_case_log.append(speed_case)
 
         #Get message for each case
-
-
+        eval_messsge = self.get_message(eval_case)
+        speed_message = self.get_message(speed_case)
+        
+        self.logger.info('Evaluation case {} with message {}'.format(eval_case, eval_message))
+        self.logger.info('Speed case {} with message {}'.format(speed case, speed_message))
         
         
-
-
-                
-
-
+        #If both messages available, choose the eval message
+        if speed_message == '' and not eval_message == '':
+            self.message(eval_message, priority=1)
+        elif not speed_message == '' and eval_message == '':
+            self.message(speed_message, priority=1)
+        elif not speed_message == '' and not eval_message == '':
+            self.message(eval_message, priority=1)
+            
