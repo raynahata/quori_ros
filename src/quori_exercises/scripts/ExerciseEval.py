@@ -26,7 +26,7 @@ class ExerciseEval:
         self.feedback = []
         self.times = []
         self.face_times = []
-        self.threshold1 = [850, 1200]
+        self.threshold1 = [850, 1000]
         self.threshold2 = [1200, 1700]
         self.feedback_controller = feedback_controller
 
@@ -151,13 +151,14 @@ class ExerciseEval:
                 threshold2 = self.threshold2[1]
             good_distances = [expert_distances[ii] for ii in self.good_experts]
 
-            if np.min(good_distances) < threshold1:
-                closest_expert = self.good_experts[np.argmin(good_distances)]
-                best_distance = np.min(good_distances)
-            else:
-                closest_expert = np.argmin(expert_distances)
-                best_distance = np.min(expert_distances)
+            # if np.min(good_distances) < threshold1:
+            #     closest_expert = self.good_experts[np.argmin(good_distances)]
+            #     best_distance = np.min(good_distances)
+            # else:
+            closest_expert = np.argmin(expert_distances)
+            best_distance = np.min(expert_distances)
             expert_label = self.labels[closest_expert]
+            self.feedback_controller.logger.info('Good expert min:', np.min(good_distances), 'All expert min:', np.min(expert_distances))
                         
             if best_distance < threshold1:
                 if expert_label == 'Good':
@@ -237,7 +238,7 @@ class ExerciseEval:
                         rep_duration = (self.times[self.peaks[-1]] - self.times[self.peaks[-2]]).total_seconds()
                         feedback = self.evaluate_rep(current_rep, rep_duration)
                         
-                        
+                       
     def reeval(self):
         for index, angle in enumerate(self.angles):
             #Look for new peaks

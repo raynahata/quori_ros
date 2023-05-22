@@ -32,13 +32,13 @@ class FeedbackController:
         self.message_time_stamps = []
         self.eval_case_log = []
         self.speed_case_log = []
-        self.robot_num = robot_num
+        self.robot_num = int(robot_num)
 
     def message(self, m, priority=2):
         #Only message if it has been 3 sec since last message
         if (len(self.message_time_stamps)) > 0:
             last_message_time = self.message_time_stamps[-1]
-            if (datetime.now(timezone('EST')) - last_message_time).total_seconds() < 3 and priority < 2:
+            if (datetime.now(timezone('EST')) - last_message_time).total_seconds() < 2.5 and priority < 2:
                 #Skip message
                 self.logger.info('Skipping {}'.format(m))
                 return
@@ -50,9 +50,9 @@ class FeedbackController:
         self.message_time_stamps.append(datetime.now(timezone('EST')))
     
     def find_eval_case(self, feedback):
-       c = ''
+        c = ''
 
-        #Case 1: 2 bad in a row per joint
+        #Case 1: 2 bad in a row per joint (only if the last thing said has not been a case 1)
         if len(feedback) >= 2:
             bad_joint_groups = []
             for joint_group in range(len(feedback[-1]['evaluation'])):        
@@ -96,7 +96,7 @@ class FeedbackController:
                 else:
                    c= '1f'
             
-            else 'bad' in bad_joint_groups:
+            elif 'bad' in bad_joint_groups:
                 #Both sides or just one side?
                 indices =[index for index, item in enumerate(bad_joint_groups) if item == 'bad']
 
@@ -110,6 +110,11 @@ class FeedbackController:
                 
                 else:
                    c= '1i'
+
+            if len(self.eval_case_log) >= 2:
+                # print(self.eval_case_log, '1' in self.eval_case_log[-1], '1' in self.eval_case_log[-2])
+                if '1' in self.eval_case_log[-1] or '1' in self.eval_case_log[-2]:
+                    c = ''
 
         #Case 2a: 2 bad eval followed by good eval
         if len(feedback) >= 3:
@@ -127,7 +132,7 @@ class FeedbackController:
         if len(feedback) >= 3:
             if np.min(feedback[-1]['evaluation']) >= 0 and np.min(feedback[-2]['evaluation']) >= 0 and np.min(feedback[-3]['evaluation']) >= 0:
                 
-               c= '2b'
+                c= '2b'
 
                 #last positive message
                 if '2b' in self.eval_case_log:
@@ -135,11 +140,11 @@ class FeedbackController:
                     final_index = max([index for index, item in enumerate(self.eval_case_log) if item == '2b'])
                     if final_index + 3 >= len(self.eval_case_log):
                        c= ''
-        
+        # print(c)
         return c
 
     def find_speed_case(self, feedback):
-       c = ''
+        c = ''
 
         #Case 3: 2 bad in a row per joint
         if len(feedback) >= 2:
@@ -159,7 +164,7 @@ class FeedbackController:
         if len(feedback) >= 3:
             if feedback[-3]['speed'] == 'good' and feedback[-2]['speed'] == 'good' and feedback[-1]['speed'] == 'good':
                 
-               c= '4b'
+                c= '4b'
 
                 #last positive message
                 if '4b' in self.speed_case_log:
@@ -172,164 +177,162 @@ class FeedbackController:
 
     def get_message(self, c, exercise_name):
 
-        match c:
-            case '1a': #Right low range of motion
-                if exercise_name == 'bicep_curls':
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on fully extending your right elbow', 'Extend your right elbow more']
-                    elif robot_num == 3:
-                        options = ['Great work. Can you focus on extending your right elbow?', 'Great job. Can you try extending your right elbow a bit more?']
-                else:
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Make sure you are not moving your right elbow', 'Make sure your right elbow is straight']
-                    elif robot_num == 3:
-                        options = ['Great job, try to keep your right elbow straight', 'Nice, can you focus on keeping your right elbow straight?']
-            case '1b': #Left low range of motion
-                if exercise_name == 'bicep_curls':
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on fully extending your left elbow', 'Extend your left elbow more']
-                    elif robot_num == 3:
-                        options = ['Great work. Can you focus on extending your left elbow?', 'Great job. Can you try extending your left elbow a bit more?']
-                else:
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Make sure you are not moving your left elbow', 'Make sure your left elbow is straight']
-                    elif robot_num == 3:
-                        options = ['Great job, try to keep your left elbow straight', 'Nice, can you focus on keeping your left elbow straight?']
-            case '1c': #Both sides low range of motion
-                if exercise_name == 'bicep_curls':
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on fully extending your elbows', 'Extend your elbows more']
-                    elif robot_num == 3:
-                        options = ['Great work. Can you focus on extending your elbows?', 'Great job. Can you try extending your elbows a bit more?']
-                else:
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Make sure you are not moving your elbows', 'Make sure your elbows is straight']
-                    elif robot_num == 3:
-                        options = ['Great job, try to keep your elbows straight', 'Nice, can you focus on keeping your elbows straight?']
-            case '1d': #Right high range of motion
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on stopping your right arm at 90 degrees', 'Make sure your right arm is stopping at 90 degrees']
-                    elif robot_num == 3:
-                        options = ['Great work, can you focus on stopping your right arm at 90 degrees?', 'Nice job, can you make sure you are stopping your right arm at 90 degrees']
-            case '1e': #Left high range of motion
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on stopping your left arm at 90 degrees', 'Make sure your left arm is stopping at 90 degrees']
-                    elif robot_num == 3:
-                        options = ['Great work, can you focus on stopping your right arm at 90 degrees?', 'Nice job, can you make sure you are stopping your left arm at 90 degrees']
-            case '1f': #Both sides high range of motion
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on stopping your arms at 90 degrees', 'Make sure your arms is stopping at 90 degrees']
-                    elif robot_num == 3:
-                        options = ['Great work, can you focus on stopping your arms at 90 degrees?', 'Nice job, can you make sure you are stopping your arms at 90 degrees']
-            case '1g': #Right bad
-                if exercise_name == 'bicep_curls':
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on your right elbow', 'Pay more attention to your right elbow']
-                    elif robot_num == 3:
-                        options = ['You are doing great, can you focus a bit more on your right elbow?', 'You got this, can you focus a bit more on your right elbow?']
-                else:
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on getting a full range of motion on your right shoulder', 'Make sure your right arm is getting a full range of motion.']
-                    elif robot_num == 3:
-                        options = ['Great work, try to focus a bit more on your right shoulder', 'Nice job, try to focus on your right shoulder a little more']
-            case '1h': #Left bad
-                if exercise_name == 'bicep_curls':
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on your left elbow', 'Pay more attention to your left elbow']
-                    elif robot_num == 3:
-                        options = ['You are doing great, can you focus a bit more on your left elbow?', 'You got this, can you focus a bit more on your left elbow?']
-                else:
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on getting a full range of motion on your left shoulder', 'Make sure your left arm is getting a full range of motion.']
-                    elif robot_num == 3:
-                        options = ['Great work, try to focus a bit more on your left shoulder', 'Nice job, try to focus on your left shoulder a little more']
-            case '1i': #generic bad
-                if exercise_name == 'bicep_curls':
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on your elbows', 'Pay more attention to your elbows']
-                    elif robot_num == 3:
-                        options = ['You are doing great, can you focus a bit more on your elbows?', 'You got this, can you focus a bit more on your elbows?']
-                else:
-                    if robot_num == 1:
-                        options = ['']
-                    elif robot_num == 2:
-                        options = ['Focus on getting a full range of motion in your shoulders', 'Make sure your arms are getting a full range of motion.']
-                    elif robot_num == 3:
-                        options = ['Great work, try to focus a bit more on your shoulders', 'Nice job, try to focus on your shoulders a little more']
-            case '2a': #2 bad followed by good
-                if robot_num == 1:
+        if c == '1a': #Right low range of motion
+            if exercise_name == 'bicep_curls':
+                if self.robot_num == 1:
                     options = ['']
-                elif robot_num == 2:
-                    options = ['Form is good, keep it up', 'Form looks good, keep going']
-                elif robot_num == 3:
-                    options = ['Look good, great job!', 'Great work, looking good!']
-            case '2b': #4 good - but only every 3 or so
-                if robot_num == 1:
+                elif self.robot_num == 2:
+                    options = ['Focus on fully extending your right elbow', 'Extend your right elbow more']
+                elif self.robot_num == 3:
+                    options = ['Great work. Can you focus on extending your right elbow?', 'Great job. Can you try extending your right elbow a bit more?']
+            else:
+                if self.robot_num == 1:
                     options = ['']
-                elif robot_num == 2:
-                    options = ['Form is good, keep it up', 'Form looks good, keep going']
-                elif robot_num == 3:
-                    options = ['Look good, great job!', 'Great work, looking good!']
-            case '3a': #2 fast in a row
-                if robot_num == 1:
+                elif self.robot_num == 2:
+                    options = ['Make sure you are not moving your right elbow', 'Make sure your right elbow is straight']
+                elif self.robot_num == 3:
+                    options = ['Great job, try to keep your right elbow straight', 'Nice, can you focus on keeping your right elbow straight?']
+        elif c == '1b': #Left low range of motion
+            if exercise_name == 'bicep_curls':
+                if self.robot_num == 1:
                     options = ['']
-                elif robot_num == 2:
-                    options = ['Try to slow down', 'Make sure you do not go too fast']
-                elif robot_num == 3:
-                    options = ['Nice job, can you slow down a little on the next few?', 'Great work, can you try to slow down on the next few?']
-            case '3b': #2 slow in a row
-                if robot_num == 1:
+                elif self.robot_num == 2:
+                    options = ['Focus on fully extending your left elbow', 'Extend your left elbow more']
+                elif self.robot_num == 3:
+                    options = ['Great work. Can you focus on extending your left elbow?', 'Great job. Can you try extending your left elbow a bit more?']
+            else:
+                if self.robot_num == 1:
                     options = ['']
-                elif robot_num == 2:
-                    options = ['Try to speed up', 'Make sure you do not go too slow']
-                elif robot_num == 3:
-                    options = ['Nice job, can you speed up a little on the next few?', 'Great work, can you try to speed up on the next few?']
-            case '4a': #2 bad followed by 1 good speed
-                if robot_num == 1:
+                elif self.robot_num == 2:
+                    options = ['Make sure you are not moving your left elbow', 'Make sure your left elbow is straight']
+                elif self.robot_num == 3:
+                    options = ['Great job, try to keep your left elbow straight', 'Nice, can you focus on keeping your left elbow straight?']
+        elif c == '1c': #Both sides low range of motion
+            if exercise_name == 'bicep_curls':
+                if self.robot_num == 1:
                     options = ['']
-                elif robot_num == 2:
-                    options = ['Great speed, keep it up', 'Nice speed, keep going']
-                elif robot_num == 3:
-                    options = ['Great work, nice pace', 'Nice job, great speed']
-            case '4b': #4 good speed, but only every 3 or so
-                if robot_num == 1:
+                elif self.robot_num == 2:
+                    options = ['Focus on fully extending your elbows', 'Extend your elbows more']
+                elif self.robot_num == 3:
+                    options = ['Great work. Can you focus on extending your elbows?', 'Great job. Can you try extending your elbows a bit more?']
+            else:
+                if self.robot_num == 1:
                     options = ['']
-                elif robot_num == 2:
-                    options = ['Great speed, keep it up', 'Nice speed, keep going']
-                elif robot_num == 3:
-                    options = ['Great work, nice pace', 'Nice job, great speed']
-            case other:
+                elif self.robot_num == 2:
+                    options = ['Make sure you are not moving your elbows', 'Make sure your elbows are straight']
+                elif self.robot_num == 3:
+                    options = ['Great job, try to keep your elbows straight', 'Nice, can you focus on keeping your elbows straight?']
+        elif c == '1d': #Right high range of motion
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on stopping your right arm at 90 degrees', 'Make sure your right arm is stopping at 90 degrees']
+                elif self.robot_num == 3:
+                    options = ['Great work, can you focus on stopping your right arm at 90 degrees?', 'Nice job, can you make sure you are stopping your right arm at 90 degrees']
+        elif c == '1e': #Left high range of motion
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on stopping your left arm at 90 degrees', 'Make sure your left arm is stopping at 90 degrees']
+                elif self.robot_num == 3:
+                    options = ['Great work, can you focus on stopping your right arm at 90 degrees?', 'Nice job, can you make sure you are stopping your left arm at 90 degrees']
+        elif c == '1f': #Both sides high range of motion
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on stopping your arms at 90 degrees', 'Make sure your arms is stopping at 90 degrees']
+                elif self.robot_num == 3:
+                    options = ['Great work, can you focus on stopping your arms at 90 degrees?', 'Nice job, can you make sure you are stopping your arms at 90 degrees']
+        elif c == '1g': #Right bad
+            if exercise_name == 'bicep_curls':
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on your right elbow', 'Pay more attention to your right elbow']
+                elif self.robot_num == 3:
+                    options = ['You are doing great, can you focus a bit more on your right elbow?', 'You got this, can you focus a bit more on your right elbow?']
+            else:
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on getting a full range of motion on your right shoulder', 'Make sure your right arm is getting a full range of motion.']
+                elif self.robot_num == 3:
+                    options = ['Great work, try to focus a bit more on your right shoulder', 'Nice job, try to focus on your right shoulder a little more']
+        elif c == '1h': #Left bad
+            if exercise_name == 'bicep_curls':
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on your left elbow', 'Pay more attention to your left elbow']
+                elif self.robot_num == 3:
+                    options = ['You are doing great, can you focus a bit more on your left elbow?', 'You got this, can you focus a bit more on your left elbow?']
+            else:
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on getting a full range of motion on your left shoulder', 'Make sure your left arm is getting a full range of motion.']
+                elif self.robot_num == 3:
+                    options = ['Great work, try to focus a bit more on your left shoulder', 'Nice job, try to focus on your left shoulder a little more']
+        elif c == '1i': #generic bad
+            if exercise_name == 'bicep_curls':
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on your elbows', 'Pay more attention to your elbows']
+                elif self.robot_num == 3:
+                    options = ['You are doing great, can you focus a bit more on your elbows?', 'You got this, can you focus a bit more on your elbows?']
+            else:
+                if self.robot_num == 1:
+                    options = ['']
+                elif self.robot_num == 2:
+                    options = ['Focus on getting a full range of motion in your shoulders', 'Make sure your arms are getting a full range of motion.']
+                elif self.robot_num == 3:
+                    options = ['Great work, try to focus a bit more on your shoulders', 'Nice job, try to focus on your shoulders a little more']
+        elif c == '2a': #2 bad followed by good
+            if self.robot_num == 1:
                 options = ['']
-        
-        
+            elif self.robot_num == 2:
+                options = ['Form is good, keep it up', 'Form looks good, keep going']
+            elif self.robot_num == 3:
+                options = ['Looks good, great job!', 'Great work, looking good!']
+        elif c == '2b': #4 good - but only every 3 or so
+            if self.robot_num == 1:
+                options = ['']
+            elif self.robot_num == 2:
+                options = ['Form is good, keep it up', 'Form looks good, keep going']
+            elif self.robot_num == 3:
+                options = ['Looks good, great job!', 'Great work, looking good!']
+        elif c == '3a': #2 fast in a row
+            if self.robot_num == 1:
+                options = ['']
+            elif self.robot_num == 2:
+                options = ['Try to slow down', 'Make sure you do not go too fast']
+            elif self.robot_num == 3:
+                options = ['Nice job, can you slow down a little on the next few?', 'Great work, can you try to slow down on the next few?']
+        elif c == '3b': #2 slow in a row
+            if self.robot_num == 1:
+                options = ['']
+            elif self.robot_num == 2:
+                options = ['Try to speed up', 'Make sure you do not go too slow']
+            elif self.robot_num == 3:
+                options = ['Nice job, can you speed up a little on the next few?', 'Great work, can you try to speed up on the next few?']
+        elif c == '4a': #2 bad followed by 1 good speed
+            if self.robot_num == 1:
+                options = ['']
+            elif self.robot_num == 2:
+                options = ['Great speed, keep it up', 'Nice speed, keep going']
+            elif self.robot_num == 3:
+                options = ['Great work, nice pace', 'Nice job, great speed']
+        elif c == '4b': #4 good speed, but only every 3 or so
+            if self.robot_num == 1:
+                options = ['']
+            elif self.robot_num == 2:
+                options = ['Great speed, keep it up', 'Nice speed, keep going']
+            elif self.robot_num == 3:
+                options = ['Great work, nice pace', 'Nice job, great speed']
+        else:
+            options = ['']
+
         if len(options) > 0:
             #Pick the option that has been chosen the least
             counts = []
@@ -348,11 +351,10 @@ class FeedbackController:
 
     def react(self, feedback, exercise_name):
 
-
         #Nonverbal
         
         #If last rep was overall good and good speed
-        if np.sum(feedback[-1]['evaluation']) and feedback[-1]['speed'] == 'good':
+        if np.min(feedback[-1]['evaluation']) >= 0  and feedback[-1]['speed'] == 'good':
             self.logger.info('Good evaluation and speed, robot smiles')
             if not self.replay:
                 body_face_msg = Float64MultiArray()
@@ -360,7 +362,7 @@ class FeedbackController:
                 self.body_face_pub.publish(body_face_msg)
                 
         #If last rep was overall good but not good speed
-        elif np.sum(feedback[-1]['evaluation']):
+        elif np.min(feedback[-1]['evaluation']) >= 0:
             self.logger.info('Good evaluation, but not good speed, robot smiles')
             if not self.replay:
                 body_face_msg = Float64MultiArray()
@@ -379,7 +381,7 @@ class FeedbackController:
             
         
         # Verbal
-        self.message('Rep')
+        # self.message('Rep')
         eval_case = self.find_eval_case(feedback)
         self.eval_case_log.append(eval_case)
 
@@ -387,11 +389,11 @@ class FeedbackController:
         self.speed_case_log.append(speed_case)
 
         #Get message for each case
-        eval_messsge = self.get_message(eval_case)
-        speed_message = self.get_message(speed_case)
+        eval_message = self.get_message(eval_case, exercise_name)
+        speed_message = self.get_message(speed_case, exercise_name)
         
-        self.logger.info('Evaluation case {} with message {}'.format(eval_case, eval_message))
-        self.logger.info('Speed case {} with message {}'.format(speed case, speed_message))
+        self.logger.info('Evaluation case {} with message - {}'.format(eval_case, eval_message))
+        self.logger.info('Speed case {} with message - {}'.format(speed_case, speed_message))
         
         
         #If both messages available, choose the eval message

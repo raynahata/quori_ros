@@ -4,16 +4,16 @@ from pytz import timezone
 from datetime import datetime
 import numpy as np
 
-import sys
-import os
+import logging
 
 from ExerciseEval import ExerciseEval
 from FeedbackController import FeedbackController
 
 PARTICIPANT_ID = '2'
 ROUND_NUM = 1
-ROBOT_NUM = 1
-EXERCISE_LENGTH = 30
+ROBOT_NUM = 3
+MIN_LENGTH = 30
+MAX_LENGTH = 50
 NUM_SETS = 1
 
 
@@ -53,7 +53,7 @@ def replay(filename, re_eval):
 
 def live_session(exercise_name, set_num):
     #Start log file
-    log_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.log'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
+    log_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.log'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, exercise_name, set_num)
 
     #Initialize the feedback controller
     feedback_controller = FeedbackController(False, log_filename, ROBOT_NUM)
@@ -63,33 +63,40 @@ def live_session(exercise_name, set_num):
 
     #Starting set
     exercise_eval.feedback_controller.logger.info('=====================================')
-    exercise_eval.feedback_controller.logger.info('STARTING SET {} OF {}'.format(SET_NUM, EXERCISE_NAME))
+    exercise_eval.feedback_controller.logger.info('STARTING SET {} OF {}'.format(set_num, exercise_name))
     exercise_eval.feedback_controller.logger.info('=====================================')
 
     #Robot says starting set
-    robot_message = "Get ready for set %s out of %s of %s" % (SET_NUM,
-                                                        NUM_SETS, EXERCISE_NAME.replace("_", " " ))
+    rospy.sleep(2)
+    robot_message = "Get ready for set %s out of %s of %s" % (set_num,
+                                                        NUM_SETS, exercise_name.replace("_", " " ))
     exercise_eval.feedback_controller.message(robot_message)
 
     inittime = datetime.now(timezone('EST'))
     exercise_eval.feedback_controller.logger.info('-------------------Recording!')
-    half_message = False
+    # half_message = False
     start_message = False
-    while (datetime.now(timezone('EST')) - inittime).total_seconds() < EXERCISE_LENGTH:        
+
+    #Stop between minimum and maximum time and minimum reps
+    while (datetime.now(timezone('EST')) - inittime).total_seconds() < MAX_LENGTH:        
     
         #Robot says starting set
         if not start_message:
-            robot_message = "Start %s now" % (EXERCISE_NAME.replace("_", " " ))
+            robot_message = "Start %s now" % (exercise_name.replace("_", " " ))
             exercise_eval.feedback_controller.message(robot_message)
             start_message = True
 
         exercise_eval.flag = True
         feedback_controller.flag = True
-        if (datetime.now(timezone('EST')) - inittime).total_seconds() > EXERCISE_LENGTH/2 and not half_message:
-            robot_message = "Halfway"
-            exercise_eval.feedback_controller.message(robot_message)
-            half_message = True
-    
+        # if (datetime.now(timezone('EST')) - inittime).total_seconds() > EXERCISE_LENGTH/2 and not half_message:
+        #     robot_message = "Halfway"
+        #     exercise_eval.feedback_controller.message(robot_message)
+        #     half_message = True
+
+        #If number of reps is greater than 8 and they have been exercising at least the minimum length
+        if len(exercise_eval.peaks)-1 > 8 and (datetime.now(timezone('EST')) - inittime).total_seconds() > MIN_LENGTH:
+            break 
+
     exercise_eval.flag = False
     exercise_eval.feedback_controller.logger.info('-------------------Done with exercise')
 
@@ -104,7 +111,7 @@ def live_session(exercise_name, set_num):
     exercise_eval.pose_sub.unregister()
     exercise_eval.face_sub.unregister()
     
-    data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
+    data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, exercise_name, set_num)
     np.savez('src/quori_exercises/saved_data/{}'.format(data_filename),      
                             angles=exercise_eval.angles,
                             facial_features=exercise_eval.facial_features,
@@ -112,11 +119,11 @@ def live_session(exercise_name, set_num):
                             feedback=exercise_eval.feedback,
                             times=exercise_eval.times,
                             face_times=exercise_eval.face_times,
-                            exercise_name=EXERCISE_NAME
+                            exercise_name=exercise_name
                         )
     exercise_eval.feedback_controller.logger.info('Saved file {}'.format(data_filename))
 
-    exercise_eval.feedback_controller.logger.shutdown()
+    logging.shutdown()
 
 
 if __name__ == '__main__':
@@ -125,13 +132,14 @@ if __name__ == '__main__':
     rospy.init_node('exercise_session', anonymous=True)
 
     #Set flag for live or not
-    replay_flag = True
+    replay_flag = False
 
     if replay_flag:
         #Set flags and variables for reaching from files
         re_eval = True
         SET_NUM = 1
-        EXERCISE_NAME = 'bicep_curls'
+        ROBOT_NUM = 2
+        EXERCISE_NAME = 'lateral_raises'
 
         data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
 
@@ -141,7 +149,7 @@ if __name__ == '__main__':
         rate = rospy.Rate(10)
 
         #For each exercise and set
-        for EXERCISE_NAME in ['bicep_curls']:
+        for EXERCISE_NAME in ['bicep_curls', 'lateral_raises']:
             for SET_NUM in range(1, NUM_SETS+1):
                 live_session(EXERCISE_NAME, SET_NUM)
 
