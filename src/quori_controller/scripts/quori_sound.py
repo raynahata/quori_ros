@@ -4,8 +4,6 @@ import rospy
 from std_msgs.msg import String
 import pyttsx3
 
-
-
 def callback(data):
     engine.say(data.data)
     engine.runAndWait()

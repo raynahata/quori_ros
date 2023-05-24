@@ -9,12 +9,19 @@ import logging
 from ExerciseEval import ExerciseEval
 from FeedbackController import FeedbackController
 
-PARTICIPANT_ID = '2'
-ROUND_NUM = 1
-ROBOT_NUM = 3
+#Fixed parameters
 MIN_LENGTH = 30
 MAX_LENGTH = 50
 NUM_SETS = 1
+REST_TIME = 40
+
+#Change at beginning of study
+PARTICIPANT_ID = '2'
+
+#Change between each round
+ROBOT_NUM = 2
+
+ROUND_NUM = 1
 
 
 def replay(filename, re_eval):
@@ -64,16 +71,23 @@ def live_session(exercise_name, set_num):
     exercise_eval.feedback_controller.logger.info('STARTING SET {} OF {}'.format(set_num, exercise_name))
     exercise_eval.feedback_controller.logger.info('=====================================')
 
-    #Robot says starting set
+    #Raise arm
+    feedback_controller.move_right_arm('raise')
+
+    #Robot says starting set and smile
     rospy.sleep(2)
     robot_message = "Get ready for set %s out of %s of %s" % (set_num,
                                                         NUM_SETS, exercise_name.replace("_", " " ))
     exercise_eval.feedback_controller.message(robot_message)
+    feedback_controller.change_expression('smile', 0.5, 3)
+    rospy.sleep(6)
 
     inittime = datetime.now(timezone('EST'))
     exercise_eval.feedback_controller.logger.info('-------------------Recording!')
-    # half_message = False
     start_message = False
+
+    #Lower arm
+    feedback_controller.move_right_arm('lower')
 
     #Stop between minimum and maximum time and minimum reps
     while (datetime.now(timezone('EST')) - inittime).total_seconds() < MAX_LENGTH:        
@@ -86,10 +100,6 @@ def live_session(exercise_name, set_num):
 
         exercise_eval.flag = True
         feedback_controller.flag = True
-        # if (datetime.now(timezone('EST')) - inittime).total_seconds() > EXERCISE_LENGTH/2 and not half_message:
-        #     robot_message = "Halfway"
-        #     exercise_eval.feedback_controller.message(robot_message)
-        #     half_message = True
 
         #If number of reps is greater than 8 and they have been exercising at least the minimum length
         if len(exercise_eval.peaks)-1 > 8 and (datetime.now(timezone('EST')) - inittime).total_seconds() > MIN_LENGTH:
@@ -100,8 +110,16 @@ def live_session(exercise_name, set_num):
 
     robot_message = "Almost done."
     exercise_eval.feedback_controller.message(robot_message)
+    rospy.sleep(2)
+
     robot_message = "Rest."
     exercise_eval.feedback_controller.message(robot_message)
+    feedback_controller.change_expression('smile', 0.5, 3)
+
+    rest_start = datetime.now(timezone('EST'))
+
+    #Raise arm
+    feedback_controller.move_right_arm('raise')
 
     #Get summary statistics
     exercise_eval.feedback_controller.logger.info('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
@@ -120,8 +138,16 @@ def live_session(exercise_name, set_num):
                         )
     exercise_eval.feedback_controller.logger.info('Saved file {}'.format(data_filename))
 
-    logging.shutdown()
+    halfway_message = False
+    while (datetime.now(timezone('EST')) - rest_start).total_seconds() < REST_TIME:
+        
+        #Print halfway done with rest here
+        if (datetime.now(timezone('EST')) - rest_start).total_seconds() > REST_TIME/2 and not halfway_message:
+            halfway_message = True
+            robot_message = "Halfway through the rest."
+            exercise_eval.feedback_controller.message(robot_message)
 
+    logging.shutdown()
 
 if __name__ == '__main__':
     

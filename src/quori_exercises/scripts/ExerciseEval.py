@@ -157,7 +157,7 @@ class ExerciseEval:
             closest_expert = np.argmin(expert_distances)
             best_distance = np.min(expert_distances)
             expert_label = self.labels[closest_expert]
-            self.feedback_controller.logger.info('Good expert min:', np.min(good_distances), 'All expert min:', np.min(expert_distances))
+            self.feedback_controller.logger.info('Good expert min {} All expert min {}'.format(np.min(good_distances), np.min(expert_distances)))
                         
             if best_distance < threshold1:
                 if expert_label == 'Good':

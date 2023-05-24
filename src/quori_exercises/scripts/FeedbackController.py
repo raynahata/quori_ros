@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 import numpy as np
 from std_msgs.msg import Float64MultiArray, String
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import rospy
 import syllables
+import time
 
 class FeedbackController:
     def __init__(self, replay, log_filename, robot_num):
@@ -21,8 +23,9 @@ class FeedbackController:
 
         if not self.replay:
             #Initialize the publishers/subscribers
-            self.body_face_pub = rospy.Publisher("quori_body_face", Float64MultiArray, queue_size=2)
             self.sound_pub = rospy.Publisher("quori_sound", String, queue_size=10)
+            self.movement_pub = rospy.Publisher('quori/joint_trajectory_controller/command', JointTrajectory, queue_size=10)
+            self.emotion_pub = rospy.Publisher('quori/face_generator_emotion', Float64MultiArray, queue_size=10)
         
             #Add file handler
             file_handler = logging.FileHandler('src/quori_exercises/saved_logs/{}'.format(log_filename))
@@ -36,6 +39,16 @@ class FeedbackController:
         self.robot_num = int(robot_num)
         self.intercept = 0.6121186140350887
         self.slope = 0.19308147
+        
+        if robot_num == 1:
+            self.neutral_expression = [0.1, 0, 0, 0, 0, 0]
+            self.neutral_posture = [0, -1.1, 0, -1.1, 0]
+        elif robot_num == 2:
+            self.neutral_expression = [0.1, 0, 0, 0, 0, 0]
+            self.neutral_posture = [-0.2, -1.1, 0, -1.1, 0.2]
+        elif robot_num == 3:
+            self.neutral_expression = [0.25, 0, 0, 0, 0, 0]
+            self.neutral_posture = [0.2, -1.1, 0, -1.1, -0.2]
 
     def message(self, m, priority=2):
         #Only message if it has been 3 sec since last message ended
@@ -51,7 +64,7 @@ class FeedbackController:
         if not self.replay:
             self.sound_pub.publish(m)
         self.message_log.append(m)
-        self.message_time_stamps.append(datetime.now(timezone('EST')) + datetime.timedelta(seconds=length_estimate) )
+        self.message_time_stamps.append(datetime.now(timezone('EST')) + timedelta(seconds=length_estimate) )
     
     def find_eval_case(self, feedback):
         c = ''
@@ -193,9 +206,9 @@ class FeedbackController:
                 if self.robot_num == 1:
                     options = ['']
                 elif self.robot_num == 2:
-                    options = ['Make sure you are not moving your right elbow.', 'Make sure your right elbow is straight.']
+                    options = ['Focus on fully extending your right arm to 90 degrees.', 'Make sure your right arm reaches 90 degrees']
                 elif self.robot_num == 3:
-                    options = ['Great job, try to keep your right elbow straight.', 'Nice, can you focus on keeping your right elbow straight?']
+                    options = ['Great job, try to reach your right arm closer to 90 degrees.', 'Nice, can you reach your right arm closer to 90 degrees?']
         elif c == '1b': #Left low range of motion
             if exercise_name == 'bicep_curls':
                 if self.robot_num == 1:
@@ -208,9 +221,9 @@ class FeedbackController:
                 if self.robot_num == 1:
                     options = ['']
                 elif self.robot_num == 2:
-                    options = ['Make sure you are not moving your left elbow.', 'Make sure your left elbow is straight.']
+                    options = ['Focus on fully extending your left arm to 90 degrees.', 'Make sure your left arm reaches 90 degrees']
                 elif self.robot_num == 3:
-                    options = ['Great job, try to keep your left elbow straight.', 'Nice, can you focus on keeping your left elbow straight?']
+                    options = ['Great job, try to reach your left arm closer to 90 degrees.', 'Nice, can you reach your left arm closer to 90 degrees?']
         elif c == '1c': #Both sides low range of motion
             if exercise_name == 'bicep_curls':
                 if self.robot_num == 1:
@@ -223,9 +236,9 @@ class FeedbackController:
                 if self.robot_num == 1:
                     options = ['']
                 elif self.robot_num == 2:
-                    options = ['Make sure you are not moving your elbows.', 'Make sure your elbows are straight.']
+                    options = ['Focus on fully extending your arms to 90 degrees.', 'Make sure your arms reach 90 degrees']
                 elif self.robot_num == 3:
-                    options = ['Great job, try to keep your elbows straight.', 'Nice, can you focus on keeping your elbows straight?']
+                    options = ['Great job, try to reach your arms closer to 90 degrees.', 'Nice, can you reach your arms closer to 90 degrees?']
         elif c == '1d': #Right high range of motion
                 if self.robot_num == 1:
                     options = ['']
@@ -248,50 +261,34 @@ class FeedbackController:
                 elif self.robot_num == 3:
                     options = ['Great work, can you focus on stopping your arms at 90 degrees?', 'Nice job, can you make sure you are stopping your arms at 90 degrees?']
         elif c == '1g': #Right bad
-            if exercise_name == 'bicep_curls':
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on your right elbow.', 'Pay more attention to your right elbow.']
-                elif self.robot_num == 3:
-                    options = ['You are doing great, can you focus a bit more on your right elbow?', 'You got this, can you focus a bit more on your right elbow?']
-            else:
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on getting a full range of motion on your right shoulder.', 'Make sure your right arm is getting a full range of motion.']
-                elif self.robot_num == 3:
-                    options = ['Great work, try to focus a bit more on your right shoulder.', 'Nice job, try to focus on your right shoulder a little more']
+            if self.robot_num == 1:
+                options = ['']
+            elif self.robot_num == 2:
+                options = ['Focus on your right side.', 'Pay more attention to your right side.']
+            elif self.robot_num == 3:
+                options = ['You are doing great, can you focus a bit more on your right side?', 'You got this, can you focus a bit more on your right side?']
         elif c == '1h': #Left bad
-            if exercise_name == 'bicep_curls':
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on your left elbow.', 'Pay more attention to your left elbow.']
-                elif self.robot_num == 3:
-                    options = ['You are doing great, can you focus a bit more on your left elbow?', 'You got this, can you focus a bit more on your left elbow?']
-            else:
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on getting a full range of motion on your left shoulder.', 'Make sure your left arm is getting a full range of motion.']
-                elif self.robot_num == 3:
-                    options = ['Great work, try to focus a bit more on your left shoulder.', 'Nice job, try to focus on your left shoulder a little more.']
+            if self.robot_num == 1:
+                options = ['']
+            elif self.robot_num == 2:
+                options = ['Focus on your left side.', 'Pay more attention to your left side.']
+            elif self.robot_num == 3:
+                options = ['You are doing great, can you focus a bit more on your left side?', 'You got this, can you focus a bit more on your left side?']
         elif c == '1i': #generic bad
             if exercise_name == 'bicep_curls':
                 if self.robot_num == 1:
                     options = ['']
                 elif self.robot_num == 2:
-                    options = ['Focus on your elbows.', 'Pay more attention to your elbows.']
+                    options = ['Focus on getting a full range of motion in your elbows.', 'Make sure you are getting a full range of motion in your elbows.']
                 elif self.robot_num == 3:
-                    options = ['You are doing great, can you focus a bit more on your elbows?', 'You got this, can you focus a bit more on your elbows?']
+                    options = ['You are doing great, try to get a full range of motion in your elbows.', 'You got this, can you focus a bit more on a full range of motion in your elbows?']
             else:
                 if self.robot_num == 1:
                     options = ['']
                 elif self.robot_num == 2:
                     options = ['Focus on getting a full range of motion in your shoulders.', 'Make sure your arms are getting a full range of motion.']
                 elif self.robot_num == 3:
-                    options = ['Great work, try to focus a bit more on your shoulders.', 'Nice job, try to focus on your shoulders a little more.']
+                    options = ['Great work, try to get a full range of motion in your shoulders.', 'Nice job, can you focus a bit more on a full range of motion in your shoulders?']
         elif c == '2a': #2 bad followed by good
             if self.robot_num == 1:
                 options = ['']
@@ -324,14 +321,14 @@ class FeedbackController:
             if self.robot_num == 1:
                 options = ['']
             elif self.robot_num == 2:
-                options = ['Great speed, keep it up.', 'Nice speed, keep going.']
+                options = ['Good speed, keep it up.', 'Nice speed, keep going.']
             elif self.robot_num == 3:
                 options = ['Great work, nice pace.', 'Nice job, great speed.']
         elif c == '4b': #4 good speed, but only every 3 or so
             if self.robot_num == 1:
                 options = ['']
             elif self.robot_num == 2:
-                options = ['Great speed, keep it up.', 'Nice speed, keep going.']
+                options = ['Good speed, keep it up.', 'Nice speed, keep going.']
             elif self.robot_num == 3:
                 options = ['Great work, nice pace.', 'Nice job, great speed.']
         else:
@@ -350,42 +347,96 @@ class FeedbackController:
             ind = np.argmin(counts)
             
             return options[ind]
-        
+
         return ''
 
-    def react(self, feedback, exercise_name):
+    def move_right_arm(self, direction):
 
-        #Nonverbal
-        
-        #If last rep was overall good and good speed
-        if np.min(feedback[-1]['evaluation']) >= 0  and feedback[-1]['speed'] == 'good':
-            self.logger.info('Good evaluation and speed, robot smiles')
+        #["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
+        arm_up = [1.1, -1.1, 0, -1.1, -0.3]
+
+        if direction == 'raise':
             if not self.replay:
-                body_face_msg = Float64MultiArray()
-                body_face_msg.data = [1, 0.7, 2]
-                self.body_face_pub.publish(body_face_msg)
-                
-        #If last rep was overall good but not good speed
-        elif np.min(feedback[-1]['evaluation']) >= 0:
-            self.logger.info('Good evaluation, but not good speed, robot smiles')
-            if not self.replay:
-                body_face_msg = Float64MultiArray()
-                body_face_msg.data = [1, 0.5, 2]
-                self.body_face_pub.publish(body_face_msg)
-        
-        elif feedback[-1]['speed'] == 'good':
-            self.logger.info('Good speed, but not good evaluation, robot smiles')
-            if not self.replay:
-                body_face_msg = Float64MultiArray()
-                body_face_msg.data = [1, 0.5, 2]
-                self.body_face_pub.publish(body_face_msg)
-        
+                self.send_body(self.neutral_posture, arm_up, 4)
+            self.logger.info('Raising right arm')
         else:
-            self.logger.info('Bad evaluation and speed, robot neutral')
-            
+            #lower
+            if not self.replay:
+                self.send_body(arm_up, self.neutral_posture, 4)
+            self.logger.info('Lowering right arm')
+
+    def change_expression(self, expression, intensity, duration):
+        #['joy', 'sadness', 'anger', 'disgust', 'fear', 'surprise']
+        if expression == 'smile':
+            if not self.replay:
+                self.send_expression([intensity, 0, 0, 0, 0, 0], self.neutral_expression, duration)
+            self.logger.info('Robot smiling at intensity {} for duration {}'.format(intensity, duration))
+        elif expression == 'frown':
+            if not self.replay:
+                self.send_expression([0, intensity, 0, 0, 0, 0], self.neutral_expression, duration)
+            self.logger.info('Robot frowning at intensity {} for duration {}'.format(intensity, duration))
+
+    def send_expression(self, start_emotion, end_emotion, duration):
+        emotion_to_send = Float64MultiArray()
+        emotion_to_send.data = start_emotion
+        self.emotion_pub.publish(emotion_to_send)
+
+        time.sleep(duration/2)
+
+        emotion_to_send = Float64MultiArray()
+        emotion_to_send.data = end_emotion
+        self.emotion_pub.publish(emotion_to_send)
+
+    def send_body(self, start_position, end_position, duration):
+        # print('Start: {}, End: {}, Duration {}'.format(start_position, end_position, duration))
+        #Start point
+        traj = JointTrajectory()
+        traj.joint_names = ["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
+        point_1 = JointTrajectoryPoint()
+        point_1.time_from_start = rospy.Duration(duration / 2)
+        point_1.positions = start_position
+        traj.points=[point_1]
+        self.movement_pub.publish(traj)
+
+        time.sleep(duration/2)
+
+        #End point
+        traj = JointTrajectory()
+        traj.joint_names = ["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
+
+        point_2 = JointTrajectoryPoint()
+        point_2.time_from_start = rospy.Duration(duration / 2)
+        point_2.positions = end_position
+        traj.points=[point_2]
+        self.movement_pub.publish(traj)
+
+    def get_nonverbal(self, feedback):
+        if np.min(feedback[-1]['evaluation']) >= 0 and feedback[-3]['speed'] == 'good': #Good eval and good speed
+            if self.robot_num == 2:
+                self.change_expression('smile', 0.5, 3)
+            elif self.robot_num == 3:
+                self.change_expression('smile', 0.8, 5)
+        elif np.min(feedback[-1]['evaluation']) >= 0 or feedback[-3]['speed'] == 'good': #Good eval or good speed
+            if self.robot_num == 2:
+                self.change_expression('smile', 0.25, 3)
+            elif self.robot_num == 3:
+                self.change_expression('smile', 0.5, 5)
+        else: #Bad/neutral
+            if self.robot_num == 2:
+                self.change_expression('frown', 0.3, 5)
+            elif self.robot_num == 3:
+                self.change_expression('frown', 0.0, 3)
         
-        # Verbal
-        # self.message('Rep')
+
+        #Move a little neutrally
+        a = -0.05
+        b = 0.05
+        start_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
+        end_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
+        self.send_body(self, start_position, end_position, 2)
+
+    def react(self, feedback, exercise_name): 
+        
         eval_case = self.find_eval_case(feedback)
         self.eval_case_log.append(eval_case)
 
@@ -395,10 +446,9 @@ class FeedbackController:
         #Get message for each case
         eval_message = self.get_message(eval_case, exercise_name)
         speed_message = self.get_message(speed_case, exercise_name)
-        
+
         self.logger.info('Evaluation case {} with message - {}'.format(eval_case, eval_message))
         self.logger.info('Speed case {} with message - {}'.format(speed_case, speed_message))
-        
         
         #If both messages available, choose the eval message
         if speed_message == '' and not eval_message == '':
@@ -407,4 +457,7 @@ class FeedbackController:
             self.message(speed_message, priority=1)
         elif not speed_message == '' and not eval_message == '':
             self.message(eval_message, priority=1)
+        
+        #Nonverbal
+        self.get_nonverbal(feedback)
             

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import rospy
-import os
 from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 import numpy as np
