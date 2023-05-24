@@ -153,7 +153,7 @@ if __name__ == '__main__':
                             joints=pose_tracking.joints)
     else:
         pose_tracking.flag = True
-        face_tracking.flag = True
+        face_tracking.flag = False
         rospy.spin()
 
     

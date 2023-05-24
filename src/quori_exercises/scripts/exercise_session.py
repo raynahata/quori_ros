@@ -27,11 +27,9 @@ def replay(filename, re_eval):
     exercise_eval = ExerciseEval(True, data_file['exercise_name'], feedback_controller)
 
     exercise_eval.angles = data_file['angles']
-    exercise_eval.facial_features = data_file['facial_features']
     exercise_eval.peaks=data_file['peaks']
     exercise_eval.feedback=data_file['feedback']
     exercise_eval.times=data_file['times']
-    exercise_eval.face_times=data_file['face_times']
     exercise_eval.good_experts = np.array([ii for ii, label in enumerate(exercise_eval.labels) if 'Good' in label]).astype(int)
 
     #Get joint groups
@@ -100,25 +98,24 @@ def live_session(exercise_name, set_num):
     exercise_eval.flag = False
     exercise_eval.feedback_controller.logger.info('-------------------Done with exercise')
 
-    robot_message = "Rest"
+    robot_message = "Almost done."
+    exercise_eval.feedback_controller.message(robot_message)
+    robot_message = "Rest."
     exercise_eval.feedback_controller.message(robot_message)
 
     #Get summary statistics
     exercise_eval.feedback_controller.logger.info('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
 
-    exercise_eval.feedback_controller.logger.info('Total Angles {}, Total Facial Features {}'.format(exercise_eval.angles.shape[0], exercise_eval.facial_features.shape))
+    exercise_eval.feedback_controller.logger.info('Total Angles {}'.format(exercise_eval.angles.shape[0]))
 
     exercise_eval.pose_sub.unregister()
-    exercise_eval.face_sub.unregister()
     
     data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, exercise_name, set_num)
     np.savez('src/quori_exercises/saved_data/{}'.format(data_filename),      
                             angles=exercise_eval.angles,
-                            facial_features=exercise_eval.facial_features,
                             peaks=exercise_eval.peaks,
                             feedback=exercise_eval.feedback,
                             times=exercise_eval.times,
-                            face_times=exercise_eval.face_times,
                             exercise_name=exercise_name
                         )
     exercise_eval.feedback_controller.logger.info('Saved file {}'.format(data_filename))

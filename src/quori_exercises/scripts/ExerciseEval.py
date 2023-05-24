@@ -20,7 +20,6 @@ class ExerciseEval:
         if not self.replay:
             #Initialize the subscribers
             self.pose_sub = rospy.Subscriber("joint_angles", Float64MultiArray, self.pose_callback, queue_size=10)
-            self.face_sub = rospy.Subscriber("facial_features", Float64MultiArray, self.face_callback, queue_size=10)
 
         self.peaks = []
         self.feedback = []
@@ -237,8 +236,7 @@ class ExerciseEval:
                         current_rep = self.angles[self.peaks[-2]:self.peaks[-1],:]
                         rep_duration = (self.times[self.peaks[-1]] - self.times[self.peaks[-2]]).total_seconds()
                         feedback = self.evaluate_rep(current_rep, rep_duration)
-                        
-                       
+                                          
     def reeval(self):
         for index, angle in enumerate(self.angles):
             #Look for new peaks
@@ -261,13 +259,6 @@ class ExerciseEval:
                             self.feedback.append(feedback)
                             self.performance = np.vstack((self.performance, feedback['evaluation']))
             time.sleep(0.1)
-
-    def face_callback(self, face_data):
-        if self.flag:
-            self.facial_features = np.vstack((self.facial_features, face_data.data))
-
-            time = datetime.now(timezone('EST'))
-            self.face_times.append(time)
 
     def plot_results(self):
 

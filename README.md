@@ -63,11 +63,28 @@ export ROS_IP=$(hostname -I | awk '{print $1;}')
 export ROS_MASTER_URI=http://quori.wifi.local.cmu.edu:11311
 export ROS_HOSTNAME=$ROS_IP
 source devel/setup.bash
-rosrun quori_exercises exercise_session.py
 ```
 
 ## Set-up sound
 Go to Settings in Ubuntu and make sure the output is set to Headphones and the volume is all the way up
+
+
+## Exercise Session setup
+
+### Robot
+- Terminal 1 `roslaunch quori_launch quori_robot_main.launch`
+- Terminal 2 
+```
+cd src/quori_face_generator/gui
+python3 -m http.server 8000
+```
+- Terminal 3 `rosbag record astra_ros/devices/default/color/image_color`
+- Open a browser at `http://localhost:8000/face_generator.html`
+
+
+### Brando
+- Terminal 1 `rosrun quori_exercises exercise_session.py`
+- Terminal 2 `rosrun image_view image_view image:=/astra_ros/devices/default/color/image_color`
 
 ## Run Robot/Simulation
 

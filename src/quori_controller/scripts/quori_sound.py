@@ -4,6 +4,8 @@ import rospy
 from std_msgs.msg import String
 import pyttsx3
 
+
+
 def callback(data):
     engine.say(data.data)
     engine.runAndWait()
@@ -17,4 +19,6 @@ def listener():
 
 if __name__ == '__main__':
     engine = pyttsx3.init()
+    rate = 150
+    engine.setProperty('rate', rate)
     listener()
