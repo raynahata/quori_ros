@@ -350,20 +350,23 @@ class FeedbackController:
 
         return ''
 
-    def move_right_arm(self, direction):
+    def move_right_arm(self, start, end):
 
         #["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
-        arm_up = [1.1, -1.1, 0, -1.1, -0.3]
+        arm_halfway = self.neutral_posture
+        arm_halfway[0] = 1.1
+        
+        arm_sides = self.neutral_posture
+        
+        arm_up = self.neutral_posture
+        arm_up[0] = 1.5
+        
+        positions = {'halfway': arm_halfway, 'sides': arm_sides, 'arm_up': arm_up}
+        
+        self.logger.info('Moving arm from {} to {}'.format(start, end))
+        
+        self.send_body(positions[start], positions[end], 4)
 
-        if direction == 'raise':
-            if not self.replay:
-                self.send_body(self.neutral_posture, arm_up, 4)
-            self.logger.info('Raising right arm')
-        else:
-            #lower
-            if not self.replay:
-                self.send_body(arm_up, self.neutral_posture, 4)
-            self.logger.info('Lowering right arm')
 
     def change_expression(self, expression, intensity, duration):
         #['joy', 'sadness', 'anger', 'disgust', 'fear', 'surprise']
@@ -388,53 +391,100 @@ class FeedbackController:
         self.emotion_pub.publish(emotion_to_send)
 
     def send_body(self, start_position, end_position, duration):
-        # print('Start: {}, End: {}, Duration {}'.format(start_position, end_position, duration))
-        #Start point
-        traj = JointTrajectory()
-        traj.joint_names = ["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
-        point_1 = JointTrajectoryPoint()
-        point_1.time_from_start = rospy.Duration(duration / 2)
-        point_1.positions = start_position
-        traj.points=[point_1]
-        self.movement_pub.publish(traj)
+        if not self.replay:
+            # print('Start: {}, End: {}, Duration {}'.format(start_position, end_position, duration))
+            #Start point
+            traj = JointTrajectory()
+            traj.joint_names = ["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
+            point_1 = JointTrajectoryPoint()
+            point_1.time_from_start = rospy.Duration(duration / 2)
+            point_1.positions = start_position
+            traj.points=[point_1]
+            self.movement_pub.publish(traj)
 
-        time.sleep(duration/2)
+            time.sleep(duration/2)
 
-        #End point
-        traj = JointTrajectory()
-        traj.joint_names = ["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
+            #End point
+            traj = JointTrajectory()
+            traj.joint_names = ["r_shoulder_pitch", "r_shoulder_roll", "l_shoulder_pitch", "l_shoulder_roll", "waist_pitch"]
 
-        point_2 = JointTrajectoryPoint()
-        point_2.time_from_start = rospy.Duration(duration / 2)
-        point_2.positions = end_position
-        traj.points=[point_2]
-        self.movement_pub.publish(traj)
+            point_2 = JointTrajectoryPoint()
+            point_2.time_from_start = rospy.Duration(duration / 2)
+            point_2.positions = end_position
+            traj.points=[point_2]
+            self.movement_pub.publish(traj)
+        else:
+            self.logger.info('Moving from {} to {} for duration {}'.format(start_position, end_position, duration))
 
-    def get_nonverbal(self, feedback):
+    def react_facial(self, feedback):
+        #Change expression based on feedback
         if np.min(feedback[-1]['evaluation']) >= 0 and feedback[-3]['speed'] == 'good': #Good eval and good speed
             if self.robot_num == 2:
-                self.change_expression('smile', 0.5, 3)
+                self.change_expression('smile', 0.5, 2)
             elif self.robot_num == 3:
-                self.change_expression('smile', 0.8, 5)
+                self.change_expression('smile', 0.8, 2)
         elif np.min(feedback[-1]['evaluation']) >= 0 or feedback[-3]['speed'] == 'good': #Good eval or good speed
             if self.robot_num == 2:
-                self.change_expression('smile', 0.25, 3)
+                self.change_expression('smile', 0.25, 2)
             elif self.robot_num == 3:
-                self.change_expression('smile', 0.5, 5)
+                self.change_expression('smile', 0.5, 2)
         else: #Bad/neutral
             if self.robot_num == 2:
-                self.change_expression('frown', 0.3, 5)
+                self.change_expression('frown', 0.3, 2)
             elif self.robot_num == 3:
-                self.change_expression('frown', 0.0, 3)
+                self.change_expression('frown', 0.0, 2)
+    
+    def react_nonverbal(self, c):
+        #Choose movement based on case
+        if c == '' or self.robot_num == 1:
+            a = -0.1
+            b = 0.1
+            start_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
+            end_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
+            self.send_body(self, start_position, end_position, 2)
         
+        else:
+            #We have a case
+            end_position = self.neutral_posture
+            
+            #Positive cases
+            if c in ['2a', '2b', '4a', '4b']:
+                #Happy movement - small
+                arm_y = np.array([2.21, -0.40])
+                arm_sides = np.array([0, -1.1])
+                distance = arm_y - arm_sides + [1e-5, 1e-5]
+                
+                if self.robot_num == 2:
+                    #Robot 2 - moves less
+                    distance_to_move = distance*0.25
+                    torso = 0.21*0.25
+                    
+                elif self.robot_num == 3:
+                    #Robot 3 - moves more
+                    distance_to_move = distance*0.4
+                    torso = 0.21*0.4
+                
+                
+                end_arm = (arm_y - arm_sides) / (distance) * distance_to_move
+                start_position = [end_arm[0], end_arm[1], end_arm[0], end_arm[1], torso]
+                self.send_body(self, start_position, end_position, 3)
+                
+            #Negative cases
+            if c in ['1a', '1b', '1c', '1d', '1e', '1f', '1g', '1h', '1i', '3a', '3b']:
+                #Sad/interest - small forward torso movement
+                
+                if self.robot_num == 2:
+                    #Robot 2 - moves less
+                    torso = -0.47*0.25
+                    
+                elif self.robot_num == 3:
+                    #Robot 3 - moves more
+                    torso = -0.47*0.4
 
-        #Move a little neutrally
-        a = -0.05
-        b = 0.05
-        start_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
-        end_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
-        self.send_body(self, start_position, end_position, 2)
-
+                start_position = self.neutral_posture
+                start_position[-1] = torso
+                self.send_body(self, start_position, end_position, 3)
+     
     def react(self, feedback, exercise_name): 
         
         eval_case = self.find_eval_case(feedback)
@@ -453,11 +503,15 @@ class FeedbackController:
         #If both messages available, choose the eval message
         if speed_message == '' and not eval_message == '':
             self.message(eval_message, priority=1)
+            self.react_nonverbal(eval_case)
         elif not speed_message == '' and eval_message == '':
             self.message(speed_message, priority=1)
+            self.react_nonverbal(speed_case)
         elif not speed_message == '' and not eval_message == '':
             self.message(eval_message, priority=1)
+            self.react_nonverbal(eval_case)
+        else:
+            self.react_nonverbal('')
         
-        #Nonverbal
-        self.get_nonverbal(feedback)
+        self.react_facial(feedback)
             
