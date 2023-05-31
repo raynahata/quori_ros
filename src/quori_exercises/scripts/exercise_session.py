@@ -71,8 +71,8 @@ def live_session(exercise_name, set_num):
     exercise_eval.feedback_controller.logger.info('STARTING SET {} OF {}'.format(set_num, exercise_name))
     exercise_eval.feedback_controller.logger.info('=====================================')
 
-    #Raise arm
-    feedback_controller.move_right_arm('raise')
+    #Raise arm all the way up
+    feedback_controller.move_right_arm('up', 'halfway')
 
     #Robot says starting set and smile
     rospy.sleep(2)
@@ -86,8 +86,8 @@ def live_session(exercise_name, set_num):
     exercise_eval.feedback_controller.logger.info('-------------------Recording!')
     start_message = False
 
-    #Lower arm
-    feedback_controller.move_right_arm('lower')
+    #Lower arm all the way down
+    feedback_controller.move_right_arm('halfway', 'sides')
 
     #Stop between minimum and maximum time and minimum reps
     while (datetime.now(timezone('EST')) - inittime).total_seconds() < MAX_LENGTH:        
@@ -118,8 +118,8 @@ def live_session(exercise_name, set_num):
 
     rest_start = datetime.now(timezone('EST'))
 
-    #Raise arm
-    feedback_controller.move_right_arm('raise')
+    #Raise arm all the way up
+    feedback_controller.move_right_arm('sides', 'up')
 
     #Get summary statistics
     exercise_eval.feedback_controller.logger.info('Total Number of Reps {}'.format(len(exercise_eval.peaks)-1))
@@ -175,14 +175,3 @@ if __name__ == '__main__':
         for EXERCISE_NAME in ['bicep_curls', 'lateral_raises']:
             for SET_NUM in range(1, NUM_SETS+1):
                 live_session(EXERCISE_NAME, SET_NUM)
-
-
-               
-
-    
-    
-
-
-
-
-
