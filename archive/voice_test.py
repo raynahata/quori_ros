@@ -6,28 +6,72 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-intercept = 0.6121186140350887
-slope = 0.19308147
+# from gtts import gTTS
+# from time import sleep
+# import os
+# import pyglet
 
-engine = pyttsx3.init()
-voices = engine.getProperty('voices')
+# tts = gTTS(text='Get ready for bicep curls now', lang='en')
+# filename = '/tmp/temp.mp3'
+# tts.save(filename)
 
-rate = 150
-engine.setProperty('rate', rate)
+# music = pyglet.media.load(filename, streaming=False)
+# music.play()
 
-message = 'Starting bicep curls now'
-syllable_estimate = syllables.estimate(message)
-time_estimate = syllable_estimate*slope + intercept
-print('Estimate', np.round(time_estimate))
+# sleep(music.duration) #prevent from killing
+# os.remove(filename) #remove temperory file
 
-for id in range(len(voices)):
-    engine.setProperty('voice', voices[id].id)
-    start = datetime.now()
-    engine.say(message)
-    engine.runAndWait()
-    end = datetime.now()
-    length = (end-start).total_seconds()
-    print('Time', np.round(length))
+from gtts import gTTS
+import pygame
+from io import BytesIO
+
+pygame.init()
+
+def say(text):
+    tts = gTTS(text=text, lang='en')
+    fp = BytesIO()
+    tts.write_to_fp(fp)
+    fp.seek(0)
+    pygame.mixer.init()
+    pygame.mixer.music.load(fp)
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
+
+
+
+intercept = 0.6477586140350873
+slope = 0.31077594
+
+m = 'Get ready for bicep curls now'
+start = datetime.now()
+say(m)
+end = datetime.now()
+
+print('Actual', (end - start).total_seconds())
+print('Estimated', slope*syllables.estimate(m)+intercept)
+
+# engine = pyttsx3.init()
+# voices = engine.getProperty('voices')
+
+# rate = 150
+# engine.setProperty('rate', rate)
+
+# message = 'Starting bicep curls now'
+# syllable_estimate = syllables.estimate(message)
+# time_estimate = syllable_estimate*slope + intercept
+# print('Estimate', np.round(time_estimate))
+
+# for id in range(len(voices)):
+#     print(voices[id].name, voices[id].languages, voices[id].age, voices[id].gender)
+#     if voices[id].name in ['default']:
+#         engine.setProperty('voice', voices[id].id)
+#         start = datetime.now()
+#         engine.say(message)
+#         engine.runAndWait()
+#         end = datetime.now()
+#         length = (end-start).total_seconds()
+#         print('Time', np.round(length))
 
 # time_arrs = []
 
@@ -35,8 +79,7 @@ for id in range(len(voices)):
 #     message = 't'*m
 
 #     start = datetime.now()
-#     engine.say(message)
-#     engine.runAndWait()
+#     say(message)
 #     end = datetime.now()
 
 #     length = (end-start).total_seconds()
@@ -45,14 +88,14 @@ for id in range(len(voices)):
 
 # print(time_arrs)
 
-# x = np.arange(1, 20).reshape((-1, 1))
-# y = np.array([0.818842, 1.019779, 1.146254, 1.391905, 1.524725, 1.773641, 2.023303, 2.142914, 2.39705, 2.516248, 2.767083, 2.895945, 3.146031, 3.274838, 3.523963, 3.642148, 3.895265, 4.147735, 4.268064])
-# model = LinearRegression()
-# model.fit(x, y)
-# print(f"intercept: {model.intercept_}")
-# print(f"slope: {model.coef_}")
-# y_pred = model.predict(x)
-# plt.plot(x, y)
-# plt.plot(x, y_pred)
-# plt.plot()
-# plt.show()
+x = np.arange(1, 20).reshape((-1, 1))
+y = np.array([1.001924, 1.4256, 1.532458, 1.938388, 2.243875, 2.45061, 2.861637, 2.965487, 3.26843, 3.583136, 3.894372, 4.500796, 4.802016, 5.11022, 5.52887, 5.624075, 5.934113, 6.141939, 6.546897])
+model = LinearRegression()
+model.fit(x, y)
+print(f"intercept: {model.intercept_}")
+print(f"slope: {model.coef_}")
+y_pred = model.predict(x)
+plt.plot(x, y)
+plt.plot(x, y_pred)
+plt.plot()
+plt.show()

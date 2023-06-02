@@ -45,8 +45,7 @@ pip install mediapipe
 pip install fastdtw
 pip install scikit-learn
 pip install fer moviepy tensorflow
-pip install pyttsx3
-sudo apt install espeak python3-pyaudio
+pip install pygame, gtts
 ```
 
 7. Build the workspace

@@ -1,5 +1,5 @@
 <launch>
-     <arg name="hardware" default="false" />
+     <arg name="hardware" default="true" />
      <include file="$(find quori_controller)/launch/quori_control_diff.launch">
           <arg name="hardware" value="$(arg hardware)" />
      </include>

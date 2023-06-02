@@ -12,16 +12,16 @@ from FeedbackController import FeedbackController
 #Fixed parameters
 MIN_LENGTH = 30
 MAX_LENGTH = 50
-NUM_SETS = 1
+NUM_SETS = 2
 REST_TIME = 40
 
 #Change at beginning of study
-PARTICIPANT_ID = '2'
+PARTICIPANT_ID = '1'
 
 #Change between each round
-ROBOT_NUM = 2
+ROBOT_NUM = 3
 
-ROUND_NUM = 1
+ROUND_NUM = 3
 
 
 def replay(filename, re_eval):
@@ -56,7 +56,7 @@ def replay(filename, re_eval):
 
     exercise_eval.plot_results()
 
-def live_session(exercise_name, set_num):
+def live_session(exercise_name, set_num, is_final):
     #Start log file
     log_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.log'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, exercise_name, set_num)
 
@@ -79,7 +79,8 @@ def live_session(exercise_name, set_num):
     robot_message = "Get ready for set %s out of %s of %s" % (set_num,
                                                         NUM_SETS, exercise_name.replace("_", " " ))
     exercise_eval.feedback_controller.message(robot_message)
-    feedback_controller.change_expression('smile', 0.5, 3)
+    if ROBOT_NUM in [2,3]:
+        feedback_controller.change_expression('smile', 0.75, 4)
     rospy.sleep(6)
 
     inittime = datetime.now(timezone('EST'))
@@ -114,9 +115,13 @@ def live_session(exercise_name, set_num):
 
     robot_message = "Rest."
     exercise_eval.feedback_controller.message(robot_message)
-    feedback_controller.change_expression('smile', 0.5, 3)
+    if ROBOT_NUM in [2,3]:
+        feedback_controller.change_expression('smile', 0.75, 4)
 
     rest_start = datetime.now(timezone('EST'))
+
+    robot_message = "Using the scale in front of you, how difficult was that last set, from 1 to 10?"
+    exercise_eval.feedback_controller.message(robot_message)
 
     #Raise arm all the way up
     feedback_controller.move_right_arm('sides', 'up')
@@ -138,14 +143,18 @@ def live_session(exercise_name, set_num):
                         )
     exercise_eval.feedback_controller.logger.info('Saved file {}'.format(data_filename))
 
-    halfway_message = False
-    while (datetime.now(timezone('EST')) - rest_start).total_seconds() < REST_TIME:
-        
-        #Print halfway done with rest here
-        if (datetime.now(timezone('EST')) - rest_start).total_seconds() > REST_TIME/2 and not halfway_message:
-            halfway_message = True
-            robot_message = "Halfway through the rest."
-            exercise_eval.feedback_controller.message(robot_message)
+    if not is_final:
+        halfway_message = False
+        while (datetime.now(timezone('EST')) - rest_start).total_seconds() < REST_TIME:
+            
+            #Print halfway done with rest here
+            if (datetime.now(timezone('EST')) - rest_start).total_seconds() > REST_TIME/2 and not halfway_message:
+                halfway_message = True
+                robot_message = "Halfway through the rest."
+                exercise_eval.feedback_controller.message(robot_message)
+    else:
+        robot_message = "Please walk over to the researcher to fill out a survey."
+        exercise_eval.feedback_controller.message(robot_message)
 
     logging.shutdown()
 
@@ -161,8 +170,8 @@ if __name__ == '__main__':
         #Set flags and variables for reaching from files
         re_eval = True
         SET_NUM = 1
-        ROBOT_NUM = 2
-        EXERCISE_NAME = 'lateral_raises'
+        ROBOT_NUM = 3
+        EXERCISE_NAME = 'bicep_curls'
 
         data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
 
@@ -174,4 +183,8 @@ if __name__ == '__main__':
         #For each exercise and set
         for EXERCISE_NAME in ['bicep_curls', 'lateral_raises']:
             for SET_NUM in range(1, NUM_SETS+1):
-                live_session(EXERCISE_NAME, SET_NUM)
+                if EXERCISE_NAME == 'lateral_raises' and SET_NUM == NUM_SETS:
+                    is_final = True
+                else:
+                    is_final = False
+                live_session(EXERCISE_NAME, SET_NUM, is_final)
