@@ -25,8 +25,8 @@ class ExerciseEval:
         self.feedback = []
         self.times = []
         self.face_times = []
-        self.threshold1 = [850, 1000]
-        self.threshold2 = [1200, 1700]
+        self.threshold1 = [1000, 1500]
+        self.threshold2 = [1500, 2000]
         self.feedback_controller = feedback_controller
 
         #Set the variables from the file
@@ -179,13 +179,15 @@ class ExerciseEval:
             correction += ' {}'.format(joint_group)
             corrections.append(correction)
         
-        if rep_duration < np.mean(self.expert_duration) - 2:
+        if rep_duration < np.mean(self.expert_duration) - 3:
             speed = 'fast'
-        elif rep_duration > np.mean(self.expert_duration) + 2:
+        elif rep_duration > np.mean(self.expert_duration) + 3:
             speed = 'slow'
         else:
             speed = 'good'
-            
+        
+        self.feedback_controller.logger.info('Actual Duration {}, Average Expert Duration {}'.format(rep_duration, np.mean(self.expert_duration)))
+
         feedback = {'speed': speed, 'correction': corrections, 'evaluation': eval_list}
 
         self.feedback.append(feedback)

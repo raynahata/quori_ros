@@ -16,7 +16,7 @@ NUM_SETS = 2
 REST_TIME = 40
 
 #Change at beginning of study
-PARTICIPANT_ID = '1'
+PARTICIPANT_ID = '3'
 
 #Change between each round
 ROBOT_NUM = 3
@@ -120,7 +120,7 @@ def live_session(exercise_name, set_num, is_final):
 
     rest_start = datetime.now(timezone('EST'))
 
-    robot_message = "Using the scale in front of you, how difficult was that last set, from 1 to 10?"
+    robot_message = "Using the scale next to you, how difficult was that last set, from 1 to 10?"
     exercise_eval.feedback_controller.message(robot_message)
 
     #Raise arm all the way up
@@ -150,9 +150,10 @@ def live_session(exercise_name, set_num, is_final):
             #Print halfway done with rest here
             if (datetime.now(timezone('EST')) - rest_start).total_seconds() > REST_TIME/2 and not halfway_message:
                 halfway_message = True
-                robot_message = "Halfway through the rest."
+                robot_message = "Rest for {} more seconds.".format(int(REST_TIME/2))
                 exercise_eval.feedback_controller.message(robot_message)
     else:
+        rospy.sleep(8)
         robot_message = "Please walk over to the researcher to fill out a survey."
         exercise_eval.feedback_controller.message(robot_message)
 
@@ -164,13 +165,16 @@ if __name__ == '__main__':
     rospy.init_node('exercise_session', anonymous=True)
 
     #Set flag for live or not
-    replay_flag = False
+    replay_flag = True
 
     if replay_flag:
         #Set flags and variables for reaching from files
-        re_eval = True
+        re_eval = False
+
+        PARTICIPANT_ID = '3'
+        ROUND_NUM = 1
+        ROBOT_NUM = 1
         SET_NUM = 1
-        ROBOT_NUM = 3
         EXERCISE_NAME = 'bicep_curls'
 
         data_filename = 'Participant_{}_Round_{}_Robot_{}_Exercise_{}_Set_{}.npz'.format(PARTICIPANT_ID, ROUND_NUM, ROBOT_NUM, EXERCISE_NAME, SET_NUM)
