@@ -25,8 +25,8 @@ class ExerciseEval:
         self.feedback = []
         self.times = []
         self.face_times = []
-        self.threshold1 = [1000, 1500]
-        self.threshold2 = [1500, 2000]
+        self.threshold1 = [1500, 1700]
+        self.threshold2 = [2000, 2000]
         self.feedback_controller = feedback_controller
 
         #Set the variables from the file

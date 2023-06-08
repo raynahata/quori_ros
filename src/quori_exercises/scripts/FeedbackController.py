@@ -54,7 +54,7 @@ class FeedbackController:
         #Only message if it has been 3 sec since last message ended
         if (len(self.message_time_stamps)) > 0:
             last_message_time = self.message_time_stamps[-1]
-            if (datetime.now(timezone('EST')) - last_message_time).total_seconds() < 2.5 and priority < 2:
+            if (datetime.now(timezone('EST')) - last_message_time).total_seconds() < 3.5 and priority < 2:
                 #Skip message
                 self.logger.info('Skipping {}'.format(m))
                 return
@@ -413,25 +413,6 @@ class FeedbackController:
             point_2.positions = end_position
             traj.points=[point_2]
             self.movement_pub.publish(traj)
-
-
-    # def react_facial(self, feedback):
-    #     #Change expression based on feedback
-    #     if np.min(feedback[-1]['evaluation']) >= 0 and feedback[-1]['speed'] == 'good': #Good eval and good speed
-    #         if self.robot_num == 2:
-    #             self.change_expression('smile', 0.6, 3)
-    #         elif self.robot_num == 3:
-    #             self.change_expression('smile', 0.9, 3)
-    #     elif np.min(feedback[-1]['evaluation']) >= 0 or feedback[-1]['speed'] == 'good': #Good eval or good speed
-    #         if self.robot_num == 2:
-    #             self.change_expression('smile', 0.4, 3)
-    #         elif self.robot_num == 3:
-    #             self.change_expression('smile', 0.7, 3)
-    #     else: #Bad/neutral
-    #         if self.robot_num == 2:
-    #             self.change_expression('frown', 0.3, 3)
-    #         elif self.robot_num == 3:
-    #             self.change_expression('frown', 0.0, 3)
     
     def react_nonverbal(self, c):
         #Choose movement based on case
@@ -461,12 +442,12 @@ class FeedbackController:
                     torso = 0.21*0.4
                 
                 start_position = [end_arm[0], end_arm[1], end_arm[0], end_arm[1], torso]
-                self.send_body(start_position, end_position, 3)
+                self.send_body(start_position, end_position, 4)
 
                 if self.robot_num == 2:
-                    self.change_expression('smile', 0.6, 3)
+                    self.change_expression('smile', 0.6, 4)
                 elif self.robot_num == 3:
-                    self.change_expression('smile', 0.9, 3)
+                    self.change_expression('smile', 0.9, 4)
 
             #Negative cases
             if c in ['1a', '1b', '1c', '1d', '1e', '1f', '1g', '1h', '1i', '3a', '3b']:
@@ -482,12 +463,12 @@ class FeedbackController:
 
                 start_position = self.neutral_posture
                 start_position[-1] = torso
-                self.send_body(start_position, end_position, 3)
+                self.send_body(start_position, end_position, 4)
 
                 if self.robot_num == 2:
-                    self.change_expression('frown', 0.3, 3)
+                    self.change_expression('frown', 0.5, 4)
                 elif self.robot_num == 3:
-                    self.change_expression('frown', 0.0, 3)
+                    self.change_expression('frown', 0.0, 4)
      
     def react(self, feedback, exercise_name): 
         
