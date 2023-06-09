@@ -16,13 +16,12 @@ NUM_SETS = 2
 REST_TIME = 40
 
 #Change at beginning of study
-PARTICIPANT_ID = '3'
+PARTICIPANT_ID = '8'
 
 #Change between each round
-ROBOT_NUM = 3
+ROBOT_NUM = 2
 
 ROUND_NUM = 3
-
 
 def replay(filename, re_eval):
 
@@ -79,8 +78,10 @@ def live_session(exercise_name, set_num, is_final):
     robot_message = "Get ready for set %s out of %s of %s" % (set_num,
                                                         NUM_SETS, exercise_name.replace("_", " " ))
     exercise_eval.feedback_controller.message(robot_message)
-    if ROBOT_NUM in [2,3]:
-        feedback_controller.change_expression('smile', 0.75, 4)
+    if ROBOT_NUM == 2:
+        feedback_controller.change_expression('smile', 0.6, 4)
+    elif ROBOT_NUM == 3:
+        feedback_controller.change_expression('smile', 0.8, 4)
     rospy.sleep(6)
 
     inittime = datetime.now(timezone('EST'))
@@ -111,12 +112,14 @@ def live_session(exercise_name, set_num, is_final):
 
     robot_message = "Almost done."
     exercise_eval.feedback_controller.message(robot_message)
-    rospy.sleep(2)
+    rospy.sleep(3)
 
     robot_message = "Rest."
     exercise_eval.feedback_controller.message(robot_message)
-    if ROBOT_NUM in [2,3]:
-        feedback_controller.change_expression('smile', 0.75, 4)
+    if ROBOT_NUM == 2:
+        feedback_controller.change_expression('smile', 0.6, 4)
+    elif ROBOT_NUM == 3:
+        feedback_controller.change_expression('smile', 0.8, 4)
 
     rest_start = datetime.now(timezone('EST'))
 
@@ -165,7 +168,7 @@ if __name__ == '__main__':
     rospy.init_node('exercise_session', anonymous=True)
 
     #Set flag for live or not
-    replay_flag = True
+    replay_flag = False
 
     if replay_flag:
         #Set flags and variables for reaching from files
