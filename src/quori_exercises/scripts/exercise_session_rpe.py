@@ -66,6 +66,7 @@ def live_session():
     exercise_eval = ExerciseEval(False, feedback_controller)
     exercise_eval.flag = False
 
+
     #For each exercise and set
     for round_num in range(1, 4):
 
@@ -170,6 +171,8 @@ def live_session():
                             exercise_eval.feedback_controller.message(robot_message)
                 else:
                     robot_message = "End of Round {}".format(round_num)
+                    exercise_eval.feedback_controller.message(robot_message)
+
                     halfway_message = False
                     while (datetime.now(timezone('EST')) - rest_start).total_seconds() < ROUND_REST_TIME:
                         
@@ -190,8 +193,9 @@ def live_session():
                         )
     exercise_eval.feedback_controller.logger.info('Saved file {}'.format(data_filename))
 
-
+    exercise_eval.feedback_controller.logger.handlers.clear()
     logging.shutdown()
+    print('Done!')
 
 if __name__ == '__main__':
     

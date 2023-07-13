@@ -326,14 +326,14 @@ class FeedbackController:
             elif self.robot_num == 2:
                 options = ['Good speed, keep it up.', 'Nice speed, keep going.']
             elif self.robot_num == 3:
-                options = ['Great work, nice pace.', 'Nice job, great speed.']
+                options = ['Great work, nice pace!', 'Nice job, great speed!']
         elif c == '4b': #4 good speed, but only every 3 or so
             if self.robot_num == 1:
                 options = ['']
             elif self.robot_num == 2:
                 options = ['Good speed, keep it up.', 'Nice speed, keep going.']
             elif self.robot_num == 3:
-                options = ['Great work, nice pace.', 'Nice job, great speed.']
+                options = ['Great work, nice pace!', 'Nice job, great speed!']
         else:
             options = ['']
 

@@ -212,7 +212,7 @@ class ExerciseEval:
 
     def pose_callback(self, angle_data):
 
-        if len(self.angles) == 0:
+        if len(self.angles) == 0 or len(self.peaks) == 0:
             return
 
 
