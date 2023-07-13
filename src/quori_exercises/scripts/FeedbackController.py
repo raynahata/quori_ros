@@ -50,6 +50,10 @@ class FeedbackController:
             self.neutral_expression = [0.3, 0, 0, 0, 0, 0]
             self.neutral_posture = [0.2, -1.1, 0, -1.1, -0.2]
 
+    def start_new_set(self):
+        self.eval_case_log.append([])
+        self.speed_case_log.append([])
+
     def message(self, m, priority=2):
         #Only message if it has been 3 sec since last message ended
         if (len(self.message_time_stamps)) > 0:
@@ -128,9 +132,8 @@ class FeedbackController:
                 else:
                    c= '1i'
 
-            if len(self.eval_case_log) >= 2:
-                # print(self.eval_case_log, '1' in self.eval_case_log[-1], '1' in self.eval_case_log[-2])
-                if '1' in self.eval_case_log[-1] or '1' in self.eval_case_log[-2]:
+            if len(self.eval_case_log[-1]) >= 2:
+                if '1' in self.eval_case_log[-1][-1] or '1' in self.eval_case_log[-1][-2]:
                     c = ''
 
         #Case 2a: 2 bad eval followed by good eval
@@ -152,10 +155,10 @@ class FeedbackController:
                 c= '2b'
 
                 #last positive message
-                if '2b' in self.eval_case_log:
+                if '2b' in self.eval_case_log[-1]:
                     # finding the last occurrence
-                    final_index = max([index for index, item in enumerate(self.eval_case_log) if item == '2b'])
-                    if final_index + 3 >= len(self.eval_case_log):
+                    final_index = max([index for index, item in enumerate(self.eval_case_log[-1]) if item == '2b'])
+                    if final_index + 3 >= len(self.eval_case_log[-1]):
                        c= ''
         # print(c)
         return c
@@ -184,10 +187,10 @@ class FeedbackController:
                 c= '4b'
 
                 #last positive message
-                if '4b' in self.speed_case_log:
+                if '4b' in self.speed_case_log[-1]:
                     # finding the last occurrence
-                    final_index = max([index for index, item in enumerate(self.speed_case_log) if item == '4b'])
-                    if final_index + 3 >= len(self.speed_case_log):
+                    final_index = max([index for index, item in enumerate(self.speed_case_log[-1]) if item == '4b'])
+                    if final_index + 3 >= len(self.speed_case_log[-1]):
                        c= ''
         
         return c
@@ -473,10 +476,10 @@ class FeedbackController:
     def react(self, feedback, exercise_name): 
         
         eval_case = self.find_eval_case(feedback)
-        self.eval_case_log.append(eval_case)
+        self.eval_case_log[-1].append(eval_case)
 
         speed_case = self.find_speed_case(feedback)
-        self.speed_case_log.append(speed_case)
+        self.speed_case_log[-1].append(speed_case)
 
         #Get message for each case
         eval_message = self.get_message(eval_case, exercise_name)

@@ -16,7 +16,7 @@ NUM_SETS = 2
 REST_TIME = 40
 
 #Change at beginning of study
-PARTICIPANT_ID = '8'
+PARTICIPANT_ID = '24'
 
 #Change between each round
 ROBOT_NUM = 2
