@@ -95,29 +95,68 @@ def main(exercise_name, filenames, segmenting_joints, labels):
             peaks.append(peak_candidate)
     # peaks.append(angles.shape[0])
 
+    joint_groups = {'right_shoulder': [
+                ['right_hip', 'right_shoulder', 'right_elbow', 'xy'],
+                ['right_hip', 'right_shoulder', 'right_elbow', 'yz'],
+                ['right_hip', 'right_shoulder', 'right_elbow', 'xz']
+            ],
+            'left_shoulder': [
+                ['left_hip', 'left_shoulder', 'left_elbow', 'xy'],
+                ['left_hip', 'left_shoulder', 'left_elbow', 'yz'],
+                ['left_hip', 'left_shoulder', 'left_elbow', 'xz']
+            ],
+            'right_elbow': [
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'xy'],
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'yz'],
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'xz']
+            ],
+            'left_elbow': [
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'xy'],
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'yz'],
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'xz']
+            ]}
+
+    angle_order = [['right_hip', 'right_shoulder', 'right_elbow', 'xy'],
+                    ['left_hip', 'left_shoulder', 'left_elbow', 'xy'],
+                    ['right_hip', 'right_shoulder', 'right_elbow', 'yz'],
+                    ['left_hip', 'left_shoulder', 'left_elbow', 'yz'],
+                    ['right_hip', 'right_shoulder', 'right_elbow', 'xz'],
+                    ['left_hip', 'left_shoulder', 'left_elbow', 'xz'],
+                    ['right_shoulder', 'right_elbow', 'right_wrist', 'xy'],
+                    ['left_shoulder', 'left_elbow', 'left_wrist', 'xy'],
+                    ['right_shoulder', 'right_elbow', 'right_wrist', 'xz'],
+                    ['left_shoulder', 'left_elbow', 'left_wrist', 'xz'],
+                    ['right_shoulder', 'right_elbow', 'right_wrist', 'yz'],
+                    ['left_shoulder', 'left_elbow', 'left_wrist', 'yz']]
+
     experts = []
     expert_duration = []
     for start, end in zip(peaks[:-1], peaks[1:]):
-        experts.append(angles[start:end,:])
+        experts.append({'right_shoulder': [], 'left_shoulder': [], 'right_elbow': [], 'left_elbow': []})
+        for joint_group in joint_groups:
+            data = []
+            for angle_name in joint_groups[joint_group]:
+                index = angle_order.index(angle_name)
+                data.append(angles[start:end, index])
+            experts[-1][joint_group].append(data)
+        # experts.append(angles[start:end,:])
         length = (times[end-1] - times[start]).total_seconds()
         if length < 20:
             expert_duration.append(length)
     print(len(peaks)-1)
     plot_results(angles, peaks, file['joints'])
 
-    np.savez('{}_experts.npz'.format(exercise_name), experts=experts,
+    np.savez('{}_updated_experts.npz'.format(exercise_name), experts=experts,
                         expert_duration=expert_duration,
-                        joints=file['joints'],
-                        segmenting_joints=segmenting_joints,
                         labels=labels
                         )
 
 
 if __name__ == '__main__':
     exercise_name = 'lateral_raises'
-    
+
     if exercise_name == 'bicep_curls':
-        filenames = ['./experts/bicep_curls_demos.npz']
+        filenames = ['src/quori_exercises/experts/bicep_curls_demos.npz']
         segmenting_joints = [4, 5, 8, 9]
         labels = []
         for ii in range(12):
@@ -126,7 +165,7 @@ if __name__ == '__main__':
             labels.append('low range of motion')
     
     else:
-        filenames = ['./experts/lateral_raises_demos3.npz']
+        filenames = ['src/quori_exercises/experts/lateral_raises_demos3.npz']
         segmenting_joints = [4, 5, 8, 9]
         labels = []
         for ii in range(10):

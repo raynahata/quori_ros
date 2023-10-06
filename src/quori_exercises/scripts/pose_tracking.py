@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import rospy
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, StringArray
+from quori_exercises.msg import ExerciseJointAngles
 from pytz import timezone
 from datetime import datetime
 import numpy as np
@@ -25,18 +26,26 @@ class PoseTracking:
                     min_tracking_confidence=0.5,
                     model_complexity=0,)
         self.flag = False
-        self.joints = [['right_hip', 'right_shoulder', 'right_elbow', 'xy', 'right shoulder'], 
-                        ['left_hip', 'left_shoulder', 'left_elbow', 'xy', 'left shoulder'],
-                        ['right_hip', 'right_shoulder', 'right_elbow', 'yz', 'right shoulder'], 
-                        ['left_hip', 'left_shoulder', 'left_elbow', 'yz', 'left shoulder'],
-                        ['right_hip', 'right_shoulder', 'right_elbow', 'xz', 'right shoulder'], 
-                        ['left_hip', 'left_shoulder', 'left_elbow', 'xz', 'left shoulder'],
-                        ['right_shoulder', 'right_elbow', 'right_wrist', 'xy', 'right elbow'], 
-                        ['left_shoulder', 'left_elbow', 'left_wrist', 'xy', 'left elbow'],
-                        ['right_shoulder', 'right_elbow', 'right_wrist', 'xz', 'right elbow'],
-                        ['left_shoulder', 'left_elbow', 'left_wrist', 'xz', 'left elbow'],
-                        ['right_shoulder', 'right_elbow', 'right_wrist', 'yz', 'right elbow'],
-                        ['left_shoulder', 'left_elbow', 'left_wrist', 'yz', 'left elbow']]
+        self.joints = {'right_shoulder': [
+                ['right_hip', 'right_shoulder', 'right_elbow', 'xy'],
+                ['right_hip', 'right_shoulder', 'right_elbow', 'yz'],
+                ['right_hip', 'right_shoulder', 'right_elbow', 'xz']
+            ],
+            'left_shoulder': [
+                ['left_hip', 'left_shoulder', 'left_elbow', 'xy'],
+                ['left_hip', 'left_shoulder', 'left_elbow', 'yz'],
+                ['left_hip', 'left_shoulder', 'left_elbow', 'xz']
+            ],
+            'right_elbow': [
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'xy'],
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'yz'],
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'xz']
+            ],
+            'left_elbow': [
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'xy'],
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'yz'],
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'xz']
+            ]}
 
     def calc_angle(self, vec_0, vec_1, angle_type):
         if angle_type == 'xy':
@@ -74,47 +83,63 @@ class PoseTracking:
 
             self.all_times.append(ct)
 
-            #Calculate all angles we could need
-            angles = []
-            for joint in self.joints:
-                #Indices
-                indices = [self.landmark_points.index(joint[i]) for i in range(3)]
-                points = [np.array(landmarks[i]) for i in indices]
+            angle_msg = ExerciseJointAngles()
 
-                vec_0 = points[0] - points[1]
-                vec_1 = points[2] - points[1]
+            for joint_group, joint_group_angles in self.joints.items():
+                angle_array = Float64MultiArray()
+                name_array = StringArray()
 
-                angle = self.calc_angle(vec_0, vec_1, joint[3])
-                angles.append(angle)
+                data = []
+                data_names = []
+                for angle in joint_group_angles:
+                    indices = [self.landmark_points.index(angle[i]) for i in range(3)]
+                    points = [np.array(landmarks[i]) for i in indices]
 
-            self.all_angles.append(angles)
-            angle_msg = Float64MultiArray()
-            angle_msg.data = angles
-            angle_pub.publish(angle_msg)
+                    vec_0 = points[0] - points[1]
+                    vec_1 = points[2] - points[1]
 
 
-class FaceTracking:
-    def __init__(self):
-        self.sub = rospy.Subscriber("/astra_ros/devices/default/color/image_color", Image, self.callback)
-        self.flag = False
-        self.face_detector = FER()
-        
-    def callback(self, data):
-        if not self.flag:
-            return
+                    angle = self.calc_angle(vec_0, vec_1, angle[3])
+                    data.append(angle)
 
-        image = np.frombuffer(data.data, dtype=np.uint8).reshape(
-            data.height, data.width, -1)
-        
-        face_results = self.face_detector.detect_emotions(image)
-        if len(face_results) > 0:
-            emotion_names = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
-            emotions = [face_results[0]['emotions'][e] for e in emotion_names]
+                    joint_name = angle.join('__')
+                    data_names.append(joint_name)
+                
+                angle_array.data = data
+                name_array.string = data_names
 
-            emotion_msg = Float64MultiArray()
-            emotion_msg.data = emotions
-            face_pub.publish(emotion_msg)
-            
+                if joint_group == 'right_shoulder':
+                    angle_msg.right_shoulder = angle_array
+                    angle_msg.right_shoulder_joints = name_array
+                elif joint_group == 'left_shoulder':
+                    angle_msg.left_shoulder = angle_array
+                    angle_msg.left_shoulder_joints = name_array
+                elif joint_group == 'right_elbow':
+                    angle_msg.right_elbow = angle_array
+                    angle_msg.right_elbow_joints = name_array
+                elif joint_group == 'left_elbow':
+                    angle_msg.left_elbow = angle_array
+                    angle_msg.left_elbow_joints = name_array
+                
+                angle_pub.publish(angle_msg)
+                    
+
+            # angles = []
+            # for joint in self.joints:
+            #     #Indices
+            #     indices = [self.landmark_points.index(joint[i]) for i in range(3)]
+            #     points = [np.array(landmarks[i]) for i in indices]
+
+            #     vec_0 = points[0] - points[1]
+            #     vec_1 = points[2] - points[1]
+
+            #     angle = self.calc_angle(vec_0, vec_1, joint[3])
+            #     angles.append(angle)
+
+            # self.all_angles.append(angles)
+            # angle_msg = Float64MultiArray()
+            # angle_msg.data = angles
+            # angle_pub.publish(angle_msg)
 
 
 if __name__ == '__main__':
@@ -127,7 +152,6 @@ if __name__ == '__main__':
 
     #Start with exercise 1, set 1
     pose_tracking = PoseTracking()
-    face_tracking = FaceTracking()
     rospy.sleep(5)
 
     inittime = datetime.now(tz)
@@ -153,7 +177,6 @@ if __name__ == '__main__':
                             joints=pose_tracking.joints)
     else:
         pose_tracking.flag = True
-        face_tracking.flag = False
         rospy.spin()
 
     

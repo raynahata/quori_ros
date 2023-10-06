@@ -6,12 +6,14 @@ from pytz import timezone
 import numpy as np
 from std_msgs.msg import Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from quori_exercises.msg import ExerciseJointAngles
 import rospy
 import syllables
 import time
+from all_messages import *
 
 class FeedbackController:
-    def __init__(self, replay, log_filename, robot_num):
+    def __init__(self, replay, log_filename, robot_style, verbal_cadence, nonverbal_cadence):
         self.flag = False
         self.replay = replay
         self.logger = logging.getLogger()
@@ -36,17 +38,39 @@ class FeedbackController:
         self.message_time_stamps = []
         self.eval_case_log = []
         self.speed_case_log = []
-        self.robot_num = int(robot_num)
+        self.robot_style = int(robot_style)
+        self.verbal_cadence = verbal_cadence
+        self.nonverbal_cadence = nonverbal_cadence
+        self.joint_groups = {'right_shoulder': [
+                ['right_hip', 'right_shoulder', 'right_elbow', 'xy'],
+                ['right_hip', 'right_shoulder', 'right_elbow', 'yz'],
+                ['right_hip', 'right_shoulder', 'right_elbow', 'xz']
+            ],
+            'left_shoulder': [
+                ['left_hip', 'left_shoulder', 'left_elbow', 'xy'],
+                ['left_hip', 'left_shoulder', 'left_elbow', 'yz'],
+                ['left_hip', 'left_shoulder', 'left_elbow', 'xz']
+            ],
+            'right_elbow': [
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'xy'],
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'yz'],
+                ['right_shoulder', 'right_elbow', 'right_wrist', 'xz']
+            ],
+            'left_elbow': [
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'xy'],
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'yz'],
+                ['left_shoulder', 'left_elbow', 'left_wrist', 'xz']
+            ]}
         self.intercept = 0.6477586140350873
         self.slope = 0.31077594
         
-        if robot_num == 1:
+        if robot_style == 1:
             self.neutral_expression = [0.1, 0, 0, 0, 0, 0]
             self.neutral_posture = [0, -1.1, 0, -1.1, 0]
-        elif robot_num == 2:
+        elif robot_style == 2:
             self.neutral_expression = [0.2, 0, 0, 0, 0, 0]
             self.neutral_posture = [-0.2, -1.1, 0, -1.1, 0.2]
-        elif robot_num == 3:
+        elif robot_style == 3:
             self.neutral_expression = [0.3, 0, 0, 0, 0, 0]
             self.neutral_posture = [0.2, -1.1, 0, -1.1, -0.2]
 
@@ -69,278 +93,175 @@ class FeedbackController:
             self.sound_pub.publish(m)
         self.message_log.append(m)
         self.message_time_stamps.append(datetime.now(timezone('EST')) + timedelta(seconds=length_estimate) )
-    
-    def find_eval_case(self, feedback):
-        c = ''
 
-        #Case 1: 2 bad in a row per joint (only if the last thing said has not been a case 1)
-        if len(feedback) >= 2:
-            bad_joint_groups = []
-            for joint_group in range(len(feedback[-1]['evaluation'])):        
+    def get_bad_eval_cases(self, feedback):
+        c = []
 
-                if 'low range' in feedback[-2]['correction'][joint_group] and 'low range' in feedback[-1]['correction'][joint_group]:
-                    bad_joint_groups.append('low range')
-                elif 'bad' in feedback[-2]['correction'][joint_group] and 'bad' in feedback[-1]['correction'][joint_group]:
-                    bad_joint_groups.append('bad')
-                elif 'high range' in feedback[-2]['correction'][joint_group] and 'high range' in feedback[-1]['correction'][joint_group]:
-                    bad_joint_groups.append('high range')
-                else:
-                    bad_joint_groups.append('')
-        
-            if 'low range' in bad_joint_groups:
-                #Both sides or just one side?
-                indices =[index for index, item in enumerate(bad_joint_groups) if item == 'low range']
-
-                #Only right side
-                if (0 in indices or 2 in indices) and not (1 in indices or 3 in indices):
-                   c= '1a'
-                
-                #Only left side
-                elif not (0 in indices or 2 in indices) and (1 in indices or 3 in indices):
-                   c= '1b'
-                
-                else:
-                   c= '1c'
-            
-            elif 'high range' in bad_joint_groups:
-                #Both sides or just one side?
-                indices =[index for index, item in enumerate(bad_joint_groups) if item == 'high range']
-
-                #Only right side
-                if (0 in indices or 2 in indices) and not (1 in indices or 3 in indices):
-                   c= '1d'
-                
-                #Only left side
-                elif not (0 in indices or 2 in indices) and (1 in indices or 3 in indices):
-                   c= '1e'
-                
-                else:
-                   c= '1f'
-            
-            elif 'bad' in bad_joint_groups:
-                #Both sides or just one side?
-                indices =[index for index, item in enumerate(bad_joint_groups) if item == 'bad']
-
-                #Only right side
-                if (0 in indices or 2 in indices) and not (1 in indices or 3 in indices):
-                   c= '1g'
-                
-                #Only left side
-                elif not (0 in indices or 2 in indices) and (1 in indices or 3 in indices):
-                   c= '1h'
-                
-                else:
-                   c= '1i'
-
+        num_bad_in_row = 4 - self.verbal_cadence
+        if len(feedback) >= num_bad_in_row:
             if len(self.eval_case_log[-1]) >= 2:
-                if '1' in self.eval_case_log[-1][-1] or '1' in self.eval_case_log[-1][-2]:
-                    c = ''
+                for message in ['low_range', 'high_range', 'bad']:
+                    for side in ['left', 'right', 'both']:
+                        if '{} {} side'.format(message, side) in self.eval_case_log[-1][-1] or '{} {} side'.format(message, side) in self.eval_case_log[-1][-2]:
+                            return c
 
-        #Case 2a: 2 bad eval followed by good eval
-        if len(feedback) >= 3:
-            bad_joints = []
-            for joint_group in range(len(feedback[-1]['evaluation'])):
-                if feedback[-3]['evaluation'][joint_group] == -1 and feedback[-2]['evaluation'][joint_group] == -1:
-                    bad_joints.append(joint_group)
-            
+        bad_joint_groups = {'low_range': [], 'high_range': [], 'bad': []}
+        for joint_group in self.joint_groups:
+            for message in ['low_range', 'high_range', 'bad']:
+                to_check = []
+                for ii in range(-num_bad_in_row, -1):
+                    to_check.append(feedback[ii]['correction'])
+                count = [1 for tmp in to_check if message in tmp]
+                count = np.sum(count)
+                if count == num_bad_in_row:
+                    bad_joint_groups[message].append(joint_group) 
+
+        for message, bad_joints in bad_joint_groups.items():
             if len(bad_joints) > 0:
-                #Check if next one is good or ok
-                if np.min(feedback[-1]['evaluation']) >= 0:
-                   c = '2a'
+                #Check if only one side or both
+                if not 'right' in bad_joints:
+                    c.append('{} left side'.format(message))
+                elif not 'left' in bad_joints:
+                    c.append('{} right side'.format(message))
+                else:
+                    c.append('{} both sides'.format(message))
         
-        #Case 2b: 3 good eval in a row
-        if len(feedback) >= 3:
-            if np.min(feedback[-1]['evaluation']) >= 0 and np.min(feedback[-2]['evaluation']) >= 0 and np.min(feedback[-3]['evaluation']) >= 0:
-                
-                c= '2b'
+        return c
 
-                #last positive message
-                if '2b' in self.eval_case_log[-1]:
-                    # finding the last occurrence
-                    final_index = max([index for index, item in enumerate(self.eval_case_log[-1]) if item == '2b'])
-                    if final_index + 3 >= len(self.eval_case_log[-1]):
-                       c= ''
-        # print(c)
+    def get_correction_eval_cases(self, feedback):
+        c = []
+
+        num_bad_in_row = 4 - self.verbal_cadence
+
+        if len(feedback) >= num_bad_in_row + 1:
+            bad_joint_groups = {'low_range': [], 'high_range': [], 'bad': []}
+            for joint_group in self.joint_groups:
+                for message in ['low_range', 'high_range', 'bad']:
+                    to_check = feedback[-2:-num_bad_in_row-1]['correction']
+                    count = [1 for tmp in to_check if message in tmp]
+                    count = np.sum(count)
+                    if count == num_bad_in_row:
+                        bad_joint_groups[message].append(joint_group)
+            
+            for message, bad_joints in bad_joint_groups.items():
+                if len(bad_joints) > 0:
+                    #Check if only one side or both
+                    if not 'right' in bad_joints:
+                        if np.min(feedback[-1]['evaluation']) >= 0:
+                            c.append('corrected {} left side'.format(message))
+                    elif not 'left' in bad_joints:
+                        if np.min(feedback[-1]['evaluation']) >= 0:
+                            c.append('corrected {} right side'.format(message))
+                    else:
+                        if np.min(feedback[-1]['evaluation']) >= 0:
+                            c.append('corrected {} both sides'.format(message))
+        return c
+
+    def get_good_eval_cases(self, feedback):
+        c = []
+
+        num_good_in_row = 5 - self.verbal_cadence
+
+        if len(feedback) >= num_good_in_row:
+            for ii in range(-num_good_in_row, -1):
+                if np.min(feedback[ii]['evaluation']) < 0:
+                    return c
+            
+            c.append('good form')
+            #last positive message
+            if 'good form' in self.eval_case_log[-1][-1] or 'good form' in self.eval_case_log[-1][-2] or 'good form' in self.eval_case_log[-1][-3]:
+                c = []
+
+        return c
+
+    def find_eval_case(self, feedback):
+        c = []
+
+        if self.verbal_cadence == 0:
+            #no verbal feedback
+            return c
+
+        c.extend(self.get_bad_eval_cases(feedback))
+
+        c.extend(self.get_correction_eval_cases(feedback))
+        
+        c.extend(self.get_good_eval_cases(feedback))
+       
+        return c
+
+    def get_bad_speed_cases(self, feedback):
+        c = []
+
+        num_bad_in_row = 4 - self.verbal_cadence
+        if len(feedback) >= num_bad_in_row:
+            if len(self.eval_case_log[-1]) >= 2:
+                for message in ['fast', 'slow']:
+                    if message in self.speed_case_log[-1][-1] or message in self.eval_case_log[-1][-2]:
+                        return c
+
+        if feedback[-2]['speed'] == 'fast' and feedback[-1]['speed'] == 'fast':
+            c = ['fast']
+        
+        if feedback[-2]['speed'] == 'slow' and feedback[-1]['speed'] == 'slow':
+            c = ['slow']
+
+        return c
+    
+    def get_correction_speed_cases(self, feedback):
+        c = []
+
+        num_bad_in_row = 4 - self.verbal_cadence
+
+        if len(feedback) >= num_bad_in_row + 1:
+            if len(self.eval_case_log[-1]) >= 2:
+                for message in ['fast', 'slow']:
+                    if message in self.speed_case_log[-1][-1] and message in self.speed_case_log[-1][-2]:
+                        if feedback[-1]['speed'] == 'good':
+                            c = ['corrected {}'.format(message)]
+
+        return c
+    
+    def get_good_speed_cases(self, feedback):
+        c = []
+
+        num_good_in_row = 5 - self.verbal_cadence
+
+        if len(feedback) >= num_good_in_row:
+            for ii in range(-num_good_in_row, -1):
+                if feedback[ii]['speed'] == 'good':
+                    return c
+            
+            c.append('good speed')
+
+            #last positive message
+            if 'good speed' in self.speed_case_log[-1][-1] or 'good speed' in self.speed_case_log[-1][-2] or 'good speed' in self.speed_case_log[-1][-3]:
+                c= []
+
         return c
 
     def find_speed_case(self, feedback):
-        c = ''
+        c = []
 
-        #Case 3: 2 bad in a row per joint
-        if len(feedback) >= 2:
-            if feedback[-2]['speed'] == 'fast' and feedback[-1]['speed'] == 'fast':
-                c = '3a'
-            if feedback[-2]['speed'] == 'slow' and feedback[-1]['speed'] == 'slow':
-                c = '3b'
-                
-        
-        #Case 4a: 2 bad speed followed by 2 good speed
-        if len(feedback) >= 4:
+        if self.verbal_cadence == 0:
+            #no verbal feedback
+            return c
 
-            if not feedback[-4]['speed'] == 'good' and not feedback[-3]['speed'] == 'good' and feedback[-2]['speed'] == 'good' and feedback[-1]['speed'] == 'good':
-               c = '4a'
-        
-        #Case 4b: 4 good speed in row
-        if len(feedback) >= 3:
-            if feedback[-3]['speed'] == 'good' and feedback[-2]['speed'] == 'good' and feedback[-1]['speed'] == 'good':
-                
-                c= '4b'
-
-                #last positive message
-                if '4b' in self.speed_case_log[-1]:
-                    # finding the last occurrence
-                    final_index = max([index for index, item in enumerate(self.speed_case_log[-1]) if item == '4b'])
-                    if final_index + 3 >= len(self.speed_case_log[-1]):
-                       c= ''
+        c.extend(self.get_bad_speed_cases(feedback))
+        c.extend(self.get_correction_speed_cases(feedback))
+        c.extend(self.get_good_speed_cases(feedback))
         
         return c
 
     def get_message(self, c, exercise_name):
+        
+        m = []
+        for ci in c:
+            m.extend(ALL_MESSAGES[ci][self.robot_style])
 
-        if c == '1a': #Right low range of motion
-            if exercise_name == 'bicep_curls':
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on fully extending your right elbow.', 'Extend your right elbow more.']
-                elif self.robot_num == 3:
-                    options = ['Great work. Can you focus on extending your right elbow?', 'Great job. Can you try extending your right elbow a bit more?']
-            else:
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on fully extending your right arm to 90 degrees.', 'Make sure your right arm reaches 90 degrees']
-                elif self.robot_num == 3:
-                    options = ['Great job, try to reach your right arm closer to 90 degrees.', 'Nice, can you reach your right arm closer to 90 degrees?']
-        elif c == '1b': #Left low range of motion
-            if exercise_name == 'bicep_curls':
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on fully extending your left elbow.', 'Extend your left elbow more.']
-                elif self.robot_num == 3:
-                    options = ['Great work. Can you focus on extending your left elbow?', 'Great job. Can you try extending your left elbow a bit more?']
-            else:
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on fully extending your left arm to 90 degrees.', 'Make sure your left arm reaches 90 degrees']
-                elif self.robot_num == 3:
-                    options = ['Great job, try to reach your left arm closer to 90 degrees.', 'Nice, can you reach your left arm closer to 90 degrees?']
-        elif c == '1c': #Both sides low range of motion
-            if exercise_name == 'bicep_curls':
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on fully extending your elbows.', 'Extend your elbows more.']
-                elif self.robot_num == 3:
-                    options = ['Great work. Can you focus on extending your elbows?', 'Great job. Can you try extending your elbows a bit more?']
-            else:
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on fully extending your arms to 90 degrees.', 'Make sure your arms reach 90 degrees']
-                elif self.robot_num == 3:
-                    options = ['Great job, try to reach your arms closer to 90 degrees.', 'Nice, can you reach your arms closer to 90 degrees?']
-        elif c == '1d': #Right high range of motion
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on stopping your right arm at 90 degrees.', 'Make sure your right arm is stopping at 90 degrees.']
-                elif self.robot_num == 3:
-                    options = ['Great work, can you focus on stopping your right arm at 90 degrees?', 'Nice job, can you make sure you are stopping your right arm at 90 degrees']
-        elif c == '1e': #Left high range of motion
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on stopping your left arm at 90 degrees.', 'Make sure your left arm is stopping at 90 degrees.']
-                elif self.robot_num == 3:
-                    options = ['Great work, can you focus on stopping your right arm at 90 degrees?', 'Nice job, can you make sure you are stopping your left arm at 90 degrees?']
-        elif c == '1f': #Both sides high range of motion
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on stopping your arms at 90 degrees.', 'Make sure your arms is stopping at 90 degrees.']
-                elif self.robot_num == 3:
-                    options = ['Great work, can you focus on stopping your arms at 90 degrees?', 'Nice job, can you make sure you are stopping your arms at 90 degrees?']
-        elif c == '1g': #Right bad
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Focus on your right side.', 'Pay more attention to your right side.']
-            elif self.robot_num == 3:
-                options = ['You are doing great, can you focus a bit more on your right side?', 'You got this, can you focus a bit more on your right side?']
-        elif c == '1h': #Left bad
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Focus on your left side.', 'Pay more attention to your left side.']
-            elif self.robot_num == 3:
-                options = ['You are doing great, can you focus a bit more on your left side?', 'You got this, can you focus a bit more on your left side?']
-        elif c == '1i': #generic bad
-            if exercise_name == 'bicep_curls':
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on getting a full range of motion in your elbows.', 'Make sure you are getting a full range of motion in your elbows.']
-                elif self.robot_num == 3:
-                    options = ['You are doing great, try to get a full range of motion in your elbows.', 'You got this, can you focus a bit more on a full range of motion in your elbows?']
-            else:
-                if self.robot_num == 1:
-                    options = ['']
-                elif self.robot_num == 2:
-                    options = ['Focus on getting a full range of motion in your shoulders.', 'Make sure your arms are getting a full range of motion.']
-                elif self.robot_num == 3:
-                    options = ['Great work, try to get a full range of motion in your shoulders.', 'Nice job, can you focus a bit more on a full range of motion in your shoulders?']
-        elif c == '2a': #2 bad followed by good
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Form is good, keep it up.', 'Form looks good, keep going.']
-            elif self.robot_num == 3:
-                options = ['Looks good, great job!', 'Great work, looking good!']
-        elif c == '2b': #4 good - but only every 3 or so
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Form is good, keep it up.', 'Form looks good, keep going.']
-            elif self.robot_num == 3:
-                options = ['Looks good, great job!', 'Great work, looking good!']
-        elif c == '3a': #2 fast in a row
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Try to slow down.', 'Make sure you do not go too fast.']
-            elif self.robot_num == 3:
-                options = ['Nice job, can you slow down a little on the next few?', 'Great work, can you try to slow down on the next few?']
-        elif c == '3b': #2 slow in a row
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Try to speed up.', 'Make sure you do not go too slow.']
-            elif self.robot_num == 3:
-                options = ['Nice job, can you speed up a little on the next few?', 'Great work, can you try to speed up on the next few?']
-        elif c == '4a': #2 bad followed by 1 good speed
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Good speed, keep it up.', 'Nice speed, keep going.']
-            elif self.robot_num == 3:
-                options = ['Great work, nice pace!', 'Nice job, great speed!']
-        elif c == '4b': #4 good speed, but only every 3 or so
-            if self.robot_num == 1:
-                options = ['']
-            elif self.robot_num == 2:
-                options = ['Good speed, keep it up.', 'Nice speed, keep going.']
-            elif self.robot_num == 3:
-                options = ['Great work, nice pace!', 'Nice job, great speed!']
-        else:
-            options = ['']
-
-        if len(options) > 0:
+        if len(m) > 0:
             #Pick the option that has been chosen the least
             counts = []
-            for option in options:
+            for option in m:
                 if option in self.message_log:
                     counts.append(self.message_log.count(option))
                 else:
@@ -349,9 +270,9 @@ class FeedbackController:
             #Get the minimum count
             ind = np.argmin(counts)
             
-            return options[ind]
+            return ind, m[ind]
 
-        return ''
+        return -1, ''
 
     def move_right_arm(self, start, end):
 
@@ -417,62 +338,82 @@ class FeedbackController:
             traj.points=[point_2]
             self.movement_pub.publish(traj)
     
-    def react_nonverbal(self, c):
-        #Choose movement based on case
-        if c == '' or self.robot_num == 1:
+    def react_nonverbal(self, value):
+
+        if value == 'neutral':
             a = -0.1
             b = 0.1
             start_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
             end_position = (self.neutral_posture + (b-a) * np.random.random_sample((5,)) + a).tolist()
             self.send_body(start_position, end_position, 2)
 
-        else:
-            #We have a case
-            end_position = self.neutral_posture
+        elif value == 'positive':
             
-            #Positive cases
-            if c in ['2a', '2b', '4a', '4b']:
-                #Happy movement - small
+            if self.robot_style == 2:
+                #Robot 2 - moves less
+                end_arm = [0, -0.8]
+                torso = 0.21*0.25
                 
-                if self.robot_num == 2:
-                    #Robot 2 - moves less
-                    end_arm = [0, -0.8]
-                    torso = 0.21*0.25
-                    
-                elif self.robot_num == 3:
-                    #Robot 3 - moves more
-                    end_arm = [0, -0.8]
-                    torso = 0.21*0.4
+            elif self.robot_style == 3:
+                #Robot 3 - moves more
+                end_arm = [0, -0.8]
+                torso = 0.21*0.4
                 
-                start_position = [end_arm[0], end_arm[1], end_arm[0], end_arm[1], torso]
-                self.send_body(start_position, end_position, 4)
+            start_position = [end_arm[0], end_arm[1], end_arm[0], end_arm[1], torso]
+            self.send_body(start_position, self.neutral_posture, 4)
 
-                if self.robot_num == 2:
-                    self.change_expression('smile', 0.6, 4)
-                elif self.robot_num == 3:
-                    self.change_expression('smile', 0.9, 4)
+            if self.robot_style == 2:
+                self.change_expression('smile', 0.6, 4)
+            elif self.robot_style == 3:
+                self.change_expression('smile', 0.9, 4)
 
-            #Negative cases
-            if c in ['1a', '1b', '1c', '1d', '1e', '1f', '1g', '1h', '1i', '3a', '3b']:
-                #Sad/interest - small forward torso movement
+        elif value == 'negative':
+
+            if self.robot_style == 2:
+                #Robot 2 - moves less
+                torso = -0.47*0.25
                 
-                if self.robot_num == 2:
-                    #Robot 2 - moves less
-                    torso = -0.47*0.25
-                    
-                elif self.robot_num == 3:
-                    #Robot 3 - moves more
-                    torso = -0.47*0.4
+            elif self.robot_style == 3:
+                #Robot 3 - moves more
+                torso = -0.47*0.4
 
-                start_position = self.neutral_posture
-                start_position[-1] = torso
-                self.send_body(start_position, end_position, 4)
+            start_position = self.neutral_posture
+            start_position[-1] = torso
+            self.send_body(start_position, self.neutral_posture, 4)
 
-                if self.robot_num == 2:
-                    self.change_expression('frown', 0.5, 4)
-                elif self.robot_num == 3:
-                    self.change_expression('frown', 0.0, 4)
-     
+            if self.robot_style == 2:
+                self.change_expression('frown', 0.5, 4)
+            elif self.robot_style == 3:
+                self.change_expression('frown', 0.0, 4)
+    
+    def nonverbal_case(self, feedback, c):
+        if c == '':
+            if self.nonverbal_cadence > 2:
+                if np.min(feedback[-1]['evaluation']) >= 0:
+                    self.react_nonverbal('positive')
+                else:
+                    self.react_nonverbal('negative')
+            else:
+                self.react_nonverbal('neutral')
+        
+        else:
+            if 'good' in c or 'corrected' in c:
+                if self.nonverbal_cadence == 2:
+                    self.react_nonverbal('positive')
+                else:
+                    if np.random.random_sample() < 0.5:
+                        self.react_nonverbal('positive')
+                    else:
+                        self.react_nonverbal('neutral')
+            else:
+                if self.nonverbal_cadence == 2:
+                    self.react_nonverbal('negative')
+                else:
+                    if np.random.random_sample() < 0.5:
+                        self.react_nonverbal('negative')
+                    else:
+                        self.react_nonverbal('neutral')
+
     def react(self, feedback, exercise_name): 
         
         eval_case = self.find_eval_case(feedback)
@@ -482,24 +423,25 @@ class FeedbackController:
         self.speed_case_log[-1].append(speed_case)
 
         #Get message for each case
-        eval_message = self.get_message(eval_case, exercise_name)
-        speed_message = self.get_message(speed_case, exercise_name)
+        eval_message_ind, eval_message = self.get_message(eval_case, exercise_name)
+        speed_message_ind, speed_message = self.get_message(speed_case, exercise_name)
 
         self.logger.info('Evaluation case {} with message - {}'.format(eval_case, eval_message))
         self.logger.info('Speed case {} with message - {}'.format(speed_case, speed_message))
         
         #If both messages available, choose the eval message
         if speed_message == '' and not eval_message == '':
+            chosen_case = eval_case[eval_message_ind]
             self.message(eval_message, priority=1)
-            self.react_nonverbal(eval_case)
         elif not speed_message == '' and eval_message == '':
+            chosen_case = speed_case[speed_message_ind]
             self.message(speed_message, priority=1)
-            self.react_nonverbal(speed_case)
         elif not speed_message == '' and not eval_message == '':
+            chosen_case = eval_case[eval_message_ind]
             self.message(eval_message, priority=1)
-            self.react_nonverbal(eval_case)
+        
+        #If feedback case, want to match the reaction, otherwise go for the last feedback
+        if speed_message == '' and eval_message == '':
+            self.nonverbal_case(feedback, '')
         else:
-            self.react_nonverbal('')
-        
-        
-            
+            self.nonverbal_case(feedback, chosen_case)
