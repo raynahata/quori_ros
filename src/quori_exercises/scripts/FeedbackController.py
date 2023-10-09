@@ -199,10 +199,18 @@ class FeedbackController:
                     if message in self.speed_case_log[-1][-1] or message in self.eval_case_log[-1][-2]:
                         return c
 
-        if feedback[-2]['speed'] == 'fast' and feedback[-1]['speed'] == 'fast':
+        flag = True
+        for ii in range(-1, -num_bad_in_row):
+            if not feedback[ii]['speed'] == 'fast':
+                flag = False
+        if flag:
             c = ['fast']
         
-        if feedback[-2]['speed'] == 'slow' and feedback[-1]['speed'] == 'slow':
+        flag = True
+        for ii in range(-1, -num_bad_in_row):
+            if not feedback[ii]['speed'] == 'slow':
+                flag = False
+        if flag:
             c = ['slow']
 
         return c
@@ -211,14 +219,30 @@ class FeedbackController:
         c = []
 
         num_bad_in_row = 4 - self.verbal_cadence
-
-        if len(feedback) >= num_bad_in_row + 1:
-            if len(self.eval_case_log[-1]) >= 2:
-                for message in ['fast', 'slow']:
-                    if message in self.speed_case_log[-1][-1] and message in self.speed_case_log[-1][-2]:
-                        if feedback[-1]['speed'] == 'good':
-                            c = ['corrected {}'.format(message)]
-
+        if len(feedback) < num_bad_in_row + 1:
+            return c
+        
+        flag = True
+        for ii in range(-1, -num_bad_in_row):
+            if not feedback[ii]['speed'] == 'fast':
+                flag = False
+        if flag:
+            c = ['fast']
+        
+        flag = True
+        for ii in range(-1, -num_bad_in_row):
+            if not feedback[ii]['speed'] == 'slow':
+                flag = False
+        if flag:
+            c = ['slow']
+        
+        if c == ['fast'] or c == ['slow']:
+            if np.min(feedback[-1]['evaluation']) >= 0:
+                c = ['corrected {}'.format(c[0])]
+                return c
+        
+        c = []
+        
         return c
     
     def get_good_speed_cases(self, feedback):
