@@ -422,7 +422,7 @@ class FeedbackController:
         
         else:
             if 'good' in c or 'corrected' in c:
-                if self.nonverbal_cadence == 2:
+                if self.nonverbal_cadence >= 1:
                     self.react_nonverbal('positive')
                 else:
                     if np.random.random_sample() < 0.5:
@@ -430,7 +430,7 @@ class FeedbackController:
                     else:
                         self.react_nonverbal('neutral')
             else:
-                if self.nonverbal_cadence == 2:
+                if self.nonverbal_cadence >= 1:
                     self.react_nonverbal('negative')
                 else:
                     if np.random.random_sample() < 0.5:
