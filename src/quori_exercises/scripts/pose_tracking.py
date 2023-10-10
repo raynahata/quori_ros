@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import rospy
-from std_msgs.msg import Float64MultiArray, StringArray
+from std_msgs.msg import Float64MultiArray
 from pytz import timezone
 from datetime import datetime
 import numpy as np
