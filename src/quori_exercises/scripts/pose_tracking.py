@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 import rospy
 from std_msgs.msg import Float64MultiArray, StringArray
-from quori_exercises.msg import ExerciseJointAngles
 from pytz import timezone
 from datetime import datetime
 import numpy as np
 import mediapipe as mp
 from sensor_msgs.msg import Image
 from fer import FER
+from config import *
 
 import warnings
 warnings.filterwarnings("ignore")
-
+from config import *
 class PoseTracking:
 
     def __init__(self):
@@ -26,26 +26,6 @@ class PoseTracking:
                     min_tracking_confidence=0.5,
                     model_complexity=0,)
         self.flag = False
-        self.joints = {'right_shoulder': [
-                ['right_hip', 'right_shoulder', 'right_elbow', 'xy'],
-                ['right_hip', 'right_shoulder', 'right_elbow', 'yz'],
-                ['right_hip', 'right_shoulder', 'right_elbow', 'xz']
-            ],
-            'left_shoulder': [
-                ['left_hip', 'left_shoulder', 'left_elbow', 'xy'],
-                ['left_hip', 'left_shoulder', 'left_elbow', 'yz'],
-                ['left_hip', 'left_shoulder', 'left_elbow', 'xz']
-            ],
-            'right_elbow': [
-                ['right_shoulder', 'right_elbow', 'right_wrist', 'xy'],
-                ['right_shoulder', 'right_elbow', 'right_wrist', 'yz'],
-                ['right_shoulder', 'right_elbow', 'right_wrist', 'xz']
-            ],
-            'left_elbow': [
-                ['left_shoulder', 'left_elbow', 'left_wrist', 'xy'],
-                ['left_shoulder', 'left_elbow', 'left_wrist', 'yz'],
-                ['left_shoulder', 'left_elbow', 'left_wrist', 'xz']
-            ]}
 
     def calc_angle(self, vec_0, vec_1, angle_type):
         if angle_type == 'xy':
@@ -83,63 +63,21 @@ class PoseTracking:
 
             self.all_times.append(ct)
 
-            angle_msg = ExerciseJointAngles()
+            angle_msg = Float64MultiArray()
+            data = []
+            for joint_group, angle_description in ANGLE_INFO:
+                indices = [self.landmark_points.index(angle_description[i]) for i in range(3)]
+                points = [np.array(landmarks[i]) for i in indices]
+                vec_0 = points[0] - points[1]
+                vec_1 = points[2] - points[1]
 
-            for joint_group, joint_group_angles in self.joints.items():
-                angle_array = Float64MultiArray()
-                name_array = StringArray()
-
-                data = []
-                data_names = []
-                for angle in joint_group_angles:
-                    indices = [self.landmark_points.index(angle[i]) for i in range(3)]
-                    points = [np.array(landmarks[i]) for i in indices]
-
-                    vec_0 = points[0] - points[1]
-                    vec_1 = points[2] - points[1]
-
-
-                    angle = self.calc_angle(vec_0, vec_1, angle[3])
+                for plane in ['xy', 'yz', 'xz']:
+                    angle = self.calc_angle(vec_0, vec_1, plane)
                     data.append(angle)
+            
+            angle_msg.data = data
 
-                    joint_name = angle.join('__')
-                    data_names.append(joint_name)
-                
-                angle_array.data = data
-                name_array.string = data_names
-
-                if joint_group == 'right_shoulder':
-                    angle_msg.right_shoulder = angle_array
-                    angle_msg.right_shoulder_joints = name_array
-                elif joint_group == 'left_shoulder':
-                    angle_msg.left_shoulder = angle_array
-                    angle_msg.left_shoulder_joints = name_array
-                elif joint_group == 'right_elbow':
-                    angle_msg.right_elbow = angle_array
-                    angle_msg.right_elbow_joints = name_array
-                elif joint_group == 'left_elbow':
-                    angle_msg.left_elbow = angle_array
-                    angle_msg.left_elbow_joints = name_array
-                
-                angle_pub.publish(angle_msg)
-                    
-
-            # angles = []
-            # for joint in self.joints:
-            #     #Indices
-            #     indices = [self.landmark_points.index(joint[i]) for i in range(3)]
-            #     points = [np.array(landmarks[i]) for i in indices]
-
-            #     vec_0 = points[0] - points[1]
-            #     vec_1 = points[2] - points[1]
-
-            #     angle = self.calc_angle(vec_0, vec_1, joint[3])
-            #     angles.append(angle)
-
-            # self.all_angles.append(angles)
-            # angle_msg = Float64MultiArray()
-            # angle_msg.data = angles
-            # angle_pub.publish(angle_msg)
+            angle_pub.publish(angle_msg)
 
 
 if __name__ == '__main__':
