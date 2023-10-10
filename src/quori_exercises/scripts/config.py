@@ -22,7 +22,8 @@ EXERCISE_INFO = {
                                 ('right_elbow', [0, 1, 2]),
                                 ('left_elbow',  [0, 1, 2])],
         'threshold1': 1500,
-        'threshold2': 2000
+        'threshold2': 2000,
+        'segmenting_joint_inds': []
 
     },
     'lateral_raises': {
@@ -36,17 +37,31 @@ EXERCISE_INFO = {
                         ('right_elbow', [0, 1, 2]),
                         ('left_elbow',  [0, 1, 2])],
         'threshold1': 1700,
-        'threshold2': 2000
+        'threshold2': 2000,
+        'segmenting_joint_inds': []
     }
 
 }
+
+for exercise in EXERCISE_INFO:
+    for group, ind in EXERCISE_INFO[exercise]['segmenting_joints']:
+        EXERCISE_INFO[exercise]['segmenting_joint_inds'].append(ANGLE_ORDER[group][ind])
 
 EXPERTS = {}
 for exercise_name in EXERCISE_INFO.keys():
     npzfile = np.load('src/quori_exercises/experts/{}_updated_experts.npz'.format(exercise_name), allow_pickle=True)
 
     EXPERTS[exercise_name] = {}
-    EXPERTS[exercise_name]['experts']= npzfile['experts']
+
+    EXPERTS[exercise_name]['experts'] = []
+    for expert in npzfile['experts']:
+        data = []
+        for joint_group, _ in ANGLE_INFO:
+            data.append(expert[joint_group])
+        data = np.hstack(data)
+        data = data.reshape(data.shape[1], data.shape[2]).T
+        EXPERTS[exercise_name]['experts'].append(data)
+    
     EXPERTS[exercise_name]['duration'] = npzfile['expert_duration']
     EXPERTS[exercise_name]['labels'] = npzfile['labels']
 

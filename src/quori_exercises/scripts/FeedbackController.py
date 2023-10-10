@@ -6,11 +6,11 @@ from pytz import timezone
 import numpy as np
 from std_msgs.msg import Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from quori_exercises.msg import ExerciseJointAngles
 import rospy
 import syllables
 import time
 from all_messages import *
+from config import *
 
 class FeedbackController:
     def __init__(self, replay, log_filename, robot_style, verbal_cadence, nonverbal_cadence):
@@ -41,26 +41,6 @@ class FeedbackController:
         self.robot_style = int(robot_style)
         self.verbal_cadence = verbal_cadence
         self.nonverbal_cadence = nonverbal_cadence
-        self.joint_groups = {'right_shoulder': [
-                ['right_hip', 'right_shoulder', 'right_elbow', 'xy'],
-                ['right_hip', 'right_shoulder', 'right_elbow', 'yz'],
-                ['right_hip', 'right_shoulder', 'right_elbow', 'xz']
-            ],
-            'left_shoulder': [
-                ['left_hip', 'left_shoulder', 'left_elbow', 'xy'],
-                ['left_hip', 'left_shoulder', 'left_elbow', 'yz'],
-                ['left_hip', 'left_shoulder', 'left_elbow', 'xz']
-            ],
-            'right_elbow': [
-                ['right_shoulder', 'right_elbow', 'right_wrist', 'xy'],
-                ['right_shoulder', 'right_elbow', 'right_wrist', 'yz'],
-                ['right_shoulder', 'right_elbow', 'right_wrist', 'xz']
-            ],
-            'left_elbow': [
-                ['left_shoulder', 'left_elbow', 'left_wrist', 'xy'],
-                ['left_shoulder', 'left_elbow', 'left_wrist', 'yz'],
-                ['left_shoulder', 'left_elbow', 'left_wrist', 'xz']
-            ]}
         self.intercept = 0.6477586140350873
         self.slope = 0.31077594
         
@@ -105,26 +85,26 @@ class FeedbackController:
                         if '{} {} side'.format(message, side) in self.eval_case_log[-1][-1] or '{} {} side'.format(message, side) in self.eval_case_log[-1][-2]:
                             return c
 
-        bad_joint_groups = {'low_range': [], 'high_range': [], 'bad': []}
-        for joint_group in self.joint_groups:
-            for message in ['low_range', 'high_range', 'bad']:
-                to_check = []
-                for ii in range(-num_bad_in_row, -1):
-                    to_check.append(feedback[ii]['correction'])
-                count = [1 for tmp in to_check if message in tmp]
-                count = np.sum(count)
-                if count == num_bad_in_row:
-                    bad_joint_groups[message].append(joint_group) 
+            bad_joint_groups = {'low_range': [], 'high_range': [], 'bad': []}
+            for joint_group, _ in EXERCISE_INFO[self.current_exercise]['comparison_joints']:
+                for message in ['low_range', 'high_range', 'bad']:
+                    to_check = []
+                    for ii in range(-num_bad_in_row, -1):
+                        to_check.append(feedback[ii]['correction'])
+                    count = [1 for tmp in to_check if message in tmp]
+                    count = np.sum(count)
+                    if count == num_bad_in_row:
+                        bad_joint_groups[message].append(joint_group) 
 
-        for message, bad_joints in bad_joint_groups.items():
-            if len(bad_joints) > 0:
-                #Check if only one side or both
-                if not 'right' in bad_joints:
-                    c.append('{} left side'.format(message))
-                elif not 'left' in bad_joints:
-                    c.append('{} right side'.format(message))
-                else:
-                    c.append('{} both sides'.format(message))
+            for message, bad_joints in bad_joint_groups.items():
+                if len(bad_joints) > 0:
+                    #Check if only one side or both
+                    if not 'right' in bad_joints:
+                        c.append('{} left side'.format(message))
+                    elif not 'left' in bad_joints:
+                        c.append('{} right side'.format(message))
+                    else:
+                        c.append('{} both sides'.format(message))
         
         return c
 
@@ -135,9 +115,9 @@ class FeedbackController:
 
         if len(feedback) >= num_bad_in_row + 1:
             bad_joint_groups = {'low_range': [], 'high_range': [], 'bad': []}
-            for joint_group in self.joint_groups:
+            for joint_group, _ in EXERCISE_INFO[self.current_exercise]['comparison_joints']:
                 for message in ['low_range', 'high_range', 'bad']:
-                    to_check = feedback[-2:-num_bad_in_row-1]['correction']
+                    to_check = [f['correction'][joint_group] for f in feedback[-num_bad_in_row-1:-1] ]
                     count = [1 for tmp in to_check if message in tmp]
                     count = np.sum(count)
                     if count == num_bad_in_row:
@@ -199,19 +179,19 @@ class FeedbackController:
                     if message in self.speed_case_log[-1][-1] or message in self.eval_case_log[-1][-2]:
                         return c
 
-        flag = True
-        for ii in range(-1, -num_bad_in_row):
-            if not feedback[ii]['speed'] == 'fast':
-                flag = False
-        if flag:
-            c = ['fast']
-        
-        flag = True
-        for ii in range(-1, -num_bad_in_row):
-            if not feedback[ii]['speed'] == 'slow':
-                flag = False
-        if flag:
-            c = ['slow']
+            flag = True
+            for ii in range(-1, -num_bad_in_row):
+                if not feedback[ii]['speed'] == 'fast':
+                    flag = False
+            if flag:
+                c = ['fast']
+            
+            flag = True
+            for ii in range(-1, -num_bad_in_row):
+                if not feedback[ii]['speed'] == 'slow':
+                    flag = False
+            if flag:
+                c = ['slow']
 
         return c
     
@@ -279,9 +259,10 @@ class FeedbackController:
     def get_message(self, c, exercise_name):
         
         m = []
+        print('All cases', c)
         for ci in c:
-            m.extend(ALL_MESSAGES[ci][self.robot_style])
-
+            m.extend(ALL_MESSAGES[exercise_name][ci][self.robot_style])
+        print('All messages', m)
         if len(m) > 0:
             #Pick the option that has been chosen the least
             counts = []
@@ -290,7 +271,7 @@ class FeedbackController:
                     counts.append(self.message_log.count(option))
                 else:
                     counts.append(0)
-            
+            print('counts', counts)
             #Get the minimum count
             ind = np.argmin(counts)
             
@@ -412,34 +393,34 @@ class FeedbackController:
     
     def nonverbal_case(self, feedback, c):
         if c == '':
-            if self.nonverbal_cadence > 2:
-                if np.min(feedback[-1]['evaluation']) >= 0:
+            if np.min(feedback[-1]['evaluation']) >= 0:
+                if self.nonverbal_cadence == 3:
+                    self.react_nonverbal('positive')
+                elif self.nonverbal_cadence == 2 and np.random.random_sample() < 0.5:
+                    self.react_nonverbal('positive')
+                elif self.nonverbal_cadence == 1 and np.random.random_sample() < 0.25:
                     self.react_nonverbal('positive')
                 else:
-                    self.react_nonverbal('negative')
+                    self.react_nonverbal('neutral')
             else:
-                self.react_nonverbal('neutral')
-        
+                if self.nonverbal_cadence == 3:
+                    self.react_nonverbal('negative')
+                elif self.nonverbal_cadence == 2 and np.random.random_sample() < 0.5:
+                    self.react_nonverbal('negative')
+                elif self.nonverbal_cadence == 1 and np.random.random_sample() < 0.25:
+                    self.react_nonverbal('negative')
+                else:
+                    self.react_nonverbal('neutral')        
         else:
             if 'good' in c or 'corrected' in c:
-                if self.nonverbal_cadence >= 1:
-                    self.react_nonverbal('positive')
-                else:
-                    if np.random.random_sample() < 0.5:
-                        self.react_nonverbal('positive')
-                    else:
-                        self.react_nonverbal('neutral')
+                self.react_nonverbal('positive')
             else:
-                if self.nonverbal_cadence >= 1:
-                    self.react_nonverbal('negative')
-                else:
-                    if np.random.random_sample() < 0.5:
-                        self.react_nonverbal('negative')
-                    else:
-                        self.react_nonverbal('neutral')
+                self.react_nonverbal('negative')
 
     def react(self, feedback, exercise_name): 
         
+        self.current_exercise = exercise_name
+
         eval_case = self.find_eval_case(feedback)
         self.eval_case_log[-1].append(eval_case)
 
@@ -450,19 +431,16 @@ class FeedbackController:
         eval_message_ind, eval_message = self.get_message(eval_case, exercise_name)
         speed_message_ind, speed_message = self.get_message(speed_case, exercise_name)
 
-        self.logger.info('Evaluation case {} with message - {}'.format(eval_case, eval_message))
-        self.logger.info('Speed case {} with message - {}'.format(speed_case, speed_message))
+        self.logger.info('Evaluation case {} with index {} and message - {}'.format(eval_case, eval_message_ind, eval_message))
+        self.logger.info('Speed case {} with index {} and message - {}'.format(speed_case, speed_message_ind, speed_message))
         
         #If both messages available, choose the eval message
-        if speed_message == '' and not eval_message == '':
+        if len(eval_message) > 0:
             chosen_case = eval_case[eval_message_ind]
             self.message(eval_message, priority=1)
-        elif not speed_message == '' and eval_message == '':
+        elif len(speed_message) > 0:
             chosen_case = speed_case[speed_message_ind]
             self.message(speed_message, priority=1)
-        elif not speed_message == '' and not eval_message == '':
-            chosen_case = eval_case[eval_message_ind]
-            self.message(eval_message, priority=1)
         
         #If feedback case, want to match the reaction, otherwise go for the last feedback
         if speed_message == '' and eval_message == '':
