@@ -10,47 +10,16 @@ from ExerciseEval import ExerciseEval
 from FeedbackController import FeedbackController
 
 #Fixed parameters
-MIN_LENGTH = 30
-MAX_LENGTH = 50
+MIN_LENGTH = 15
+MAX_LENGTH = 30
+MIN_REPS = 4
 NUM_ROUNDS = 1
 NUM_SETS = 1
 
 #Parameters
-VERBAL_CADENCE = 2 #0 is none, 1 is low, 2 is medium, 3 is high
-NONVERBAL_CADENCE = 2
+VERBAL_CADENCE = 1 #1 is low, 2 is medium, 3 is high
+NONVERBAL_CADENCE = 1
 ROBOT_STYLE = 3
-
-def replay(filename, re_eval):
-
-    #Initialize the feedback controller
-    feedback_controller = FeedbackController(True, '', ROBOT_NUM)
-
-    data_file = np.load('src/quori_exercises/saved_data/{}'.format(filename), allow_pickle=True)
-
-    exercise_eval = ExerciseEval(True, data_file['exercise_name'], feedback_controller)
-
-    exercise_eval.angles = data_file['angles']
-    exercise_eval.peaks=data_file['peaks']
-    exercise_eval.feedback=data_file['feedback']
-    exercise_eval.times=data_file['times']
-    exercise_eval.good_experts = np.array([ii for ii, label in enumerate(exercise_eval.labels) if 'Good' in label]).astype(int)
-
-    #Get joint groups
-    exercise_eval.set_joint_groups()
-
-    if re_eval:
-
-        #Clear all the computed values
-        exercise_eval.peaks=[]
-        exercise_eval.feedback=[]
-
-        #Get joint groups
-        exercise_eval.set_joint_groups()
-        exercise_eval.performance = np.empty((0, len(exercise_eval.joint_groups)))
-
-        exercise_eval.reeval()
-
-    exercise_eval.plot_results()
 
 def live_session():
 
@@ -67,21 +36,8 @@ def live_session():
     #For each exercise and set
     for round_num in range(1, NUM_ROUNDS+1):
 
-        #New Round
-        exercise_eval.feedback_controller.logger.info('=====================================')
-        exercise_eval.feedback_controller.logger.info('STARTING ROUND {} OF {}'.format(round_num, 3))
-        exercise_eval.feedback_controller.logger.info('=====================================')
-
-        rospy.sleep(2)
-        robot_message = "Round %s out of 3." % (round_num)
-        exercise_eval.feedback_controller.message(robot_message)
-
         for exercise_name in ['bicep_curls']:
             for set_num in range(1, NUM_SETS+1):
-                if exercise_name == 'lateral_raises' and set_num == NUM_SETS:
-                    is_final = True
-                else:
-                    is_final = False
 
                 #Start a new set
                 exercise_eval.start_new_set(exercise_name)
@@ -127,7 +83,7 @@ def live_session():
                     feedback_controller.flag = True
 
                     #If number of reps is greater than 8 and they have been exercising at least the minimum length
-                    if len(exercise_eval.peaks[-1])-1 > 8 and (datetime.now(timezone('EST')) - inittime).total_seconds() > MIN_LENGTH:
+                    if len(exercise_eval.peaks[-1])-1 > MIN_REPS and (datetime.now(timezone('EST')) - inittime).total_seconds() > MIN_LENGTH:
                         break 
 
                 exercise_eval.flag = False
