@@ -259,10 +259,10 @@ class FeedbackController:
     def get_message(self, c, exercise_name):
         
         m = []
-        print('All cases', c)
+        # print('All cases', c)
         for ci in c:
             m.extend(ALL_MESSAGES[exercise_name][ci][self.robot_style])
-        print('All messages', m)
+        # print('All messages', m)
         if len(m) > 0:
             #Pick the option that has been chosen the least
             counts = []
@@ -271,7 +271,7 @@ class FeedbackController:
                     counts.append(self.message_log.count(option))
                 else:
                     counts.append(0)
-            print('counts', counts)
+            # print('counts', counts)
             #Get the minimum count
             ind = np.argmin(counts)
             
@@ -319,7 +319,7 @@ class FeedbackController:
         self.emotion_pub.publish(emotion_to_send)
 
     def send_body(self, start_position, end_position, duration):
-        self.logger.info('Moving from {} to {} for duration {}'.format(start_position, end_position, duration))
+        # self.logger.info('Moving from {} to {} for duration {}'.format(start_position, end_position, duration))
         if not self.replay:
             # print('Start: {}, End: {}, Duration {}'.format(start_position, end_position, duration))
             #Start point

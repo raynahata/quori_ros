@@ -55,7 +55,16 @@ catkin build
 source devel/setup.bash
 ```
 
-## Each new terminal
+## Running on the robot + Brando
+```
+cd quori_files/quori_ros
+export ROS_IP=$(hostname -I | awk '{print $1;}')
+export ROS_MASTER_URI=http://quori.wifi.local.cmu.edu:11311 
+export ROS_HOSTNAME=$ROS_IP
+source devel/setup.bash
+```
+
+## Running only on one machine
 ```
 cd quori_files/quori_ros
 export ROS_IP=localhost
@@ -63,8 +72,7 @@ export ROS_MASTER_URI=http://localhost:11311/
 export ROS_HOSTNAME=$ROS_IP
 source devel/setup.bash
 ```
-$(hostname -I | awk '{print $1;}')
-http://quori.wifi.local.cmu.edu:11311 
+
 ## Set-up sound
 Go to Settings in Ubuntu and make sure the output is set to Headphones and the volume is all the way up
 

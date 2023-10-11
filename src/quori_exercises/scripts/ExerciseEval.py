@@ -51,13 +51,14 @@ class ExerciseEval:
             if joint_ind in EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']:
                 peaks.append(signal.find_peaks(grads[:, joint_ind], height=1.5, distance=20, prominence=0.5)[0].astype('int'))
         peaks = np.sort(np.concatenate(peaks))
-        return peaks, angles, grads
+        return peaks, grads
 
-    def check_if_new_peak(self, angles, grads, peak_candidate, index_to_search):
+    def check_if_new_peak(self, grads, peak_candidate, index_to_search):
         #Peaks in absolute indices
         #Grads, peak_candidates in relative units
         
         if (len(self.peaks[-1]) == 0 and index_to_search[peak_candidate] > 15) or (len(self.peaks[-1]) > 0 and self.peaks[-1][-1] + 15 < index_to_search[peak_candidate]):
+            
             range_to_check = np.arange(np.max([peak_candidate-4, 0]), np.min([peak_candidate+4, grads.shape[0]])).astype('int')
             
             max_val = np.argmax(grads[range_to_check,:][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']],axis=0)
@@ -69,11 +70,11 @@ class ExerciseEval:
             actual_grad_max = np.max(grads[range_to_check][:, EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']])
             actual_grad_min = np.min(grads[range_to_check][:, EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']])
             
-            actual_max = np.max(angles[:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']])
-            actual_min = np.min(angles[:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']])
+            actual_max = np.max(self.angles[-1][range_to_check][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']])
+            actual_min = np.min(self.angles[-1][range_to_check][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']])
 
-            actual_max_loc = np.where(angles[:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']] == actual_max)[0][0]
-            actual_min_loc = np.where(angles[:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']] == actual_min)[0][0]
+            actual_max_loc = np.where(self.angles[-1][range_to_check][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']] == actual_max)[0][0]
+            actual_min_loc = np.where(self.angles[-1][range_to_check][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']] == actual_min)[0][0]
 
             # print(index_to_search[range_to_check[max_val]], 'Grad Max:', actual_grad_max, 'Grad Min:', actual_grad_min, 'Max Loc:', actual_max_loc, 'Min Loc:', actual_min_loc, 'Actual Max:', actual_max, 'Actual Min:', actual_min)
             if (actual_grad_max > grad_max \
@@ -87,9 +88,8 @@ class ExerciseEval:
         return False
 
     def calc_dist_worker(self, ind, series1, series2, q):
-            # q.put((ind, fastdtw(series1, series2, dist=euclidean)))
-            q.put((ind, (np.random.random()*100 + 100, [])))
-
+            q.put((ind, fastdtw(series1, series2, dist=euclidean)))
+            # q.put((ind, (np.random.random()*100 + 100, [])))
 
     def calc_dist(self, start, stop, indices):
 
@@ -163,7 +163,7 @@ class ExerciseEval:
         self.feedback[-1].append(feedback)
         self.performance[-1] = np.vstack((self.performance[-1], feedback['evaluation']))
         
-        self.feedback_controller.logger.info(feedback)
+        self.feedback_controller.logger.info('Feedback {}'.format(feedback))
         self.feedback_controller.react(self.feedback[-1], self.current_exercise)
 
         return feedback
@@ -199,17 +199,29 @@ class ExerciseEval:
 
             index_to_search = np.arange(np.max([0,self.angles[-1].shape[0]-500]), self.angles[-1].shape[0]).astype('int')
             
-            peak_candidates, current_angles, grads  = self.find_peaks(index_to_search)
-                
+            peak_candidates, grads  = self.find_peaks(index_to_search)
+            
             #Get actual list of peaks
             for peak_candidate in peak_candidates:
-                res = self.check_if_new_peak(current_angles, grads, peak_candidate, index_to_search)
+                res = self.check_if_new_peak(grads, peak_candidate, index_to_search)
                 if res:
                     self.peaks[-1].append(index_to_search[res])
-                    self.feedback_controller.logger.info('Current peak {}'.format(self.peaks[-1][-1]))
+                    self.feedback_controller.logger.info('Current peak - {}'.format(self.peaks[-1][-1]))
 
                     #Evaluate new rep
                     if len(self.peaks[-1]) > 1:
                         rep_duration = (self.times[-1][self.peaks[-1][-1]] - self.times[-1][self.peaks[-1][-2]]).total_seconds()
                         self.evaluate_rep(self.peaks[-1][-2], self.peaks[-1][-1], rep_duration)
 
+    def plot_angles(self):
+        
+        fig, ax = plt.subplots(4, 3)
+        ii = 0
+        for row in range(4):
+            for col in range(3):
+                ax[row, col].plot(self.angles[-1][:,ii])
+                for peak in self.peaks[-1]:
+                    ax[row, col].plot(peak, self.angles[-1][peak,ii], 'ok')
+                ii += 1
+        
+        plt.show()

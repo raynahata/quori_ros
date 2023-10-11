@@ -9,9 +9,12 @@ import logging
 from ExerciseEval import ExerciseEval
 from FeedbackController import FeedbackController
 
+import os, subprocess, shlex, psutil
+
+
 #Fixed parameters
-MIN_LENGTH = 15
-MAX_LENGTH = 30
+MIN_LENGTH = 30
+MAX_LENGTH = 45
 MIN_REPS = 4
 NUM_ROUNDS = 1
 NUM_SETS = 1
@@ -21,13 +24,21 @@ VERBAL_CADENCE = 1 #1 is low, 2 is medium, 3 is high
 NONVERBAL_CADENCE = 1
 ROBOT_STYLE = 3
 
-def live_session():
+def session(mode=[''], bag_filename=''):
 
     #Start log file
     log_filename = 'Style_{}_Verbal_{}_Nonverbal_{}.log'.format(ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE)
 
     #Initialize the feedback controller
     feedback_controller = FeedbackController(False, log_filename, ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE)
+
+    if 'play' in mode:
+        command = os.system("rosbag play '{}' &> /dev/null".format(bag_filename))
+    if 'record' in mode:
+        command = 'rosbag record joint_angles'
+        command = shlex.split(command)
+        proc = subprocess.Popen(command)
+
 
     #Initialize evaluation object
     exercise_eval = ExerciseEval(False, feedback_controller)
@@ -105,7 +116,15 @@ def live_session():
                 #Raise arm all the way up
                 feedback_controller.move_right_arm('sides', 'up')
 
+    for proc in psutil.process_iter():
+        if "record" in proc.name() and set(command[2:]).issubset(proc.cmdline()):
+            proc.send_signal(subprocess.signal.SIGINT)
+
+    proc.send_signal(subprocess.signal.SIGINT)
+
     data_filename = 'Style_{}_Verbal_{}_Nonverbal_{}.npz'.format(ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE)
+    
+    exercise_eval.plot_angles()
 
     np.savez('src/quori_exercises/saved_data/{}'.format(data_filename),      
                             angles=exercise_eval.angles,
@@ -126,5 +145,5 @@ if __name__ == '__main__':
     rospy.init_node('exercise_session', anonymous=True)
 
     rate = rospy.Rate(10)
-  
-    live_session()
+    
+    session(mode=['play'], bag_filename='roshni_test.bag')
