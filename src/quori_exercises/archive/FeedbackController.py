@@ -262,7 +262,7 @@ class FeedbackController:
         # print('All cases', c)
         for ci in c:
             m.extend(ALL_MESSAGES[exercise_name][ci][self.robot_style])
-        # print('All messages', m)
+        print('All messages', m)
         if len(m) > 0:
             #Pick the option that has been chosen the least
             counts = []

@@ -67,7 +67,6 @@ def live_session():
     exercise_eval = ExerciseEval(False, feedback_controller)
     exercise_eval.flag = False
 
-
     #For each exercise and set
     for round_num in range(1, NUM_ROUNDS+1):
 
