@@ -343,7 +343,6 @@ class FeedbackController:
                 self.send_expression([0, intensity, 0, 0, 0, 0], self.neutral_expression, duration)
             self.logger.info('Robot frowning at intensity {} for duration {}'.format(intensity, duration))
 
-
     def send_expression(self, start_emotion, end_emotion, duration):
         emotion_to_send = Float64MultiArray()
         emotion_to_send.data = start_emotion
