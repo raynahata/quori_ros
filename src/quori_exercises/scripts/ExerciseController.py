@@ -196,8 +196,8 @@ class ExerciseController:
         self.performance[-1] = np.vstack((self.performance[-1], feedback['evaluation']))
         
         self.logger.info('Rep {}: Feedback {}'.format(len(self.feedback[-1]), feedback))
-        self.react(self.feedback[-1], self.current_exercise)
-
+        # self.react(self.feedback[-1], self.current_exercise)
+        
         return feedback
 
     def pose_callback(self, angle_message):
@@ -232,10 +232,18 @@ class ExerciseController:
             
             #If far enough away from previous peak
             if len(self.peaks[-1]) == 0 or (self.peaks[-1][-1] + 70 < self.angles[-1].shape[0]):
+               
 
                 #Check if new rep
-                if (self.current_exercise == 'bicep_curls' and np.max(self.angles[-1][-20:,:][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']]) < 40) or \
-                (self.current_exercise == 'lateral_raises' and np.max(self.angles[-1][-20:,:][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']]) < 35) :
+                grad = []
+                for index in EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']:
+                    grad.append(np.max(np.gradient(self.angles[-1][-20:,][:,index])))
+                
+                print(np.max(self.angles[-1][-20:,:][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']]), grad)
+
+                if (self.current_exercise == 'bicep_curls' and np.max(self.angles[-1][-20:,:][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']]) < 60 and
+                np.max(grad) > 0.25) or \
+                (self.current_exercise == 'lateral_raises' and np.min(self.angles[-1][-20:,:][:,EXERCISE_INFO[self.current_exercise]['segmenting_joint_inds']]) > 120 and np.max(grad) > 25) :
 
                     #Add peak
                     self.peaks[-1].append(self.angles[-1].shape[0]-1)
@@ -245,7 +253,8 @@ class ExerciseController:
                     #Evaluate new rep
                     if len(self.peaks[-1]) > 1:
                         rep_duration = (self.times[-1][self.peaks[-1][-1]] - self.times[-1][self.peaks[-1][-2]]).total_seconds()
-                        self.evaluate_rep(self.peaks[-1][-2], self.peaks[-1][-1], rep_duration)
+                        # self.evaluate_rep(self.peaks[-1][-2], self.peaks[-1][-1], rep_duration)
+                        self.message('Rep')
 
     def plot_angles(self):
         
@@ -257,12 +266,18 @@ class ExerciseController:
                 for peak_num, (beg, end) in enumerate(zip(self.peaks[-1][:-1], self.peaks[-1][1:])):
                     ax[row, col].plot(beg, self.angles[-1][beg,ii], 'ok')
                     ax[row, col].plot(end, self.angles[-1][end,ii], 'ok')
-                    if np.min(self.feedback[-1][peak_num]['evaluation']) > 0:
-                        color = 'g'
-                    else:
-                        color = 'r'
-                    ax[row, col].plot(np.arange(beg, end), self.angles[-1][beg:end,ii], color)
+                    # if np.min(self.feedback[-1][peak_num]['evaluation']) > 0:
+                    #     color = 'g'
+                    # else:
+                    #     color = 'r'
+                    # ax[row, col].plot(np.arange(beg, end), self.angles[-1][beg:end,ii], color)
                 ii += 1
+        
+        fig, ax2 = plt.subplots(4, 3)
+        ii = 0
+        for row in range(4):
+            for col in range(3):
+                ax2[row, col].plot(np.gradient(self.angles[-1][:,ii]))
         
         plt.show()
     

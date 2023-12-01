@@ -11,14 +11,14 @@ import logging
 import time
 
 #Parameters
-MIN_LENGTH = 100
-MAX_LENGTH = 150
-MAX_REPS = 40
+MIN_LENGTH = 20
+MAX_LENGTH = 40
+MAX_REPS = 5
 NUM_SETS = 1
 REST_TIME = 40
 ROUND_REST_TIME = 80
 NUM_ROUNDS = 1 
-EXERCISE_LIST = ['bicep_curls']
+EXERCISE_LIST = ['lateral_raises']
 
 #Change at beginning of study
 PARTICIPANT_ID = '1'
