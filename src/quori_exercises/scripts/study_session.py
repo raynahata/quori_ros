@@ -4,8 +4,7 @@ import rosbag
 import numpy as np
 import matplotlib.pyplot as plt
 from config import *
-from feedback_controller import FeedbackController
-from exercise_evaluation import ExerciseEval
+from ExerciseController import ExerciseController
 from datetime import datetime
 from pytz import timezone
 import logging
@@ -33,24 +32,22 @@ rate = rospy.Rate(10)
 
 #Start log file
 log_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.log'.format(ROBOT_STYLE,VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
-
-#Initialize the feedback controller
-feedback_controller = FeedbackController(True, log_filename, ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE)
+data_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.npz'.format(ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
 
 #Initialize evaluation object
-exercise_eval = ExerciseEval(False, feedback_controller)
+controller = ExerciseController(False, log_filename, ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE)
 
 #For each exercise and set
 for round_num in range(1, NUM_ROUNDS+1):
 
     #New Round
-    exercise_eval.feedback_controller.logger.info('=====================================')
-    exercise_eval.feedback_controller.logger.info('STARTING ROUND {} OF {}'.format(round_num, NUM_ROUNDS))
-    exercise_eval.feedback_controller.logger.info('=====================================')
+    controller.logger.info('=====================================')
+    controller.logger.info('STARTING ROUND {} OF {}'.format(round_num, NUM_ROUNDS))
+    controller.logger.info('=====================================')
 
     # rospy.sleep(2)
     robot_message = "Round %s out of %s." % (round_num, NUM_ROUNDS)
-    exercise_eval.feedback_controller.message(robot_message)
+    controller.message(robot_message)
 
     for exercise_name in EXERCISE_LIST:
         for set_num in range(1, NUM_SETS+1):
@@ -61,15 +58,14 @@ for round_num in range(1, NUM_ROUNDS+1):
                 is_final = False
             
             #Start a new set
-            exercise_eval.start_new_set(exercise_name, set_num)
-            feedback_controller.start_new_set(set_num, NUM_SETS, exercise_name)
+            controller.start_new_set(exercise_name, set_num)
 
             inittime = datetime.now(timezone('EST'))
-            exercise_eval.feedback_controller.logger.info('-------------------Recording!')
+            controller.logger.info('-------------------Recording!')
             start_message = False
 
             #Lower arm all the way down
-            feedback_controller.move_right_arm('halfway', 'sides')
+            controller.move_right_arm('halfway', 'sides')
 
             #Stop between minimum and maximum time and minimum reps
             while (datetime.now(timezone('EST')) - inittime).total_seconds() < MAX_LENGTH:        
@@ -77,35 +73,30 @@ for round_num in range(1, NUM_ROUNDS+1):
                 #Robot says starting set
                 if not start_message:
                     robot_message = "Start %s now" % (exercise_name.replace("_", " " ))
-                    exercise_eval.feedback_controller.message(robot_message)
+                    controller.message(robot_message)
                     start_message = True
-                    print('starting')
 
-                exercise_eval.flag = True
-                feedback_controller.flag = True
+                controller.flag = True
 
                 #If number of reps is greater than 8 and they have been exercising at least the minimum length
-                if len(exercise_eval.peaks[-1])-1 > MAX_REPS and (datetime.now(timezone('EST')) - inittime).total_seconds() > MIN_LENGTH:
+                if len(controller.peaks[-1])-1 > MAX_REPS and (datetime.now(timezone('EST')) - inittime).total_seconds() > MIN_LENGTH:
                     break 
 
-            exercise_eval.flag = False
-            exercise_eval.feedback_controller.logger.info('-------------------Done with exercise')
+            controller.flag = False
+            controller.logger.info('-------------------Done with exercise')
 
             robot_message = "Almost done."
-            exercise_eval.feedback_controller.message(robot_message)
+            controller.message(robot_message)
             rospy.sleep(3)
 
             robot_message = "Rest."
-            exercise_eval.feedback_controller.message(robot_message)
-            if ROBOT_STYLE == 2:
-                feedback_controller.change_expression('smile', 0.6, 4)
-            elif ROBOT_STYLE == 3:
-                feedback_controller.change_expression('smile', 0.8, 4)
+            controller.message(robot_message)
+            controller.change_expression('smile', controller.start_set_smile, 4)
 
             rest_start = datetime.now(timezone('EST'))
 
             #Raise arm all the way up
-            feedback_controller.move_right_arm('sides', 'up')
+            controller.move_right_arm('sides', 'up')
 
             # if not is_final:
             #     halfway_message = False
@@ -128,21 +119,19 @@ for round_num in range(1, NUM_ROUNDS+1):
             #             halfway_message = True
             #             robot_message = "Rest for {} more seconds.".format(int(ROUND_REST_TIME/2))
             #             exercise_eval.feedback_controller.message(robot_message)
-            
-    data_filename = 'Style_{}_Verbal_{}_Nonverbal_{}.npz'.format(ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE)
     
-    exercise_eval.plot_angles()
+    controller.plot_angles()
 
     np.savez('src/quori_exercises/saved_data/{}'.format(data_filename),      
-                            angles=exercise_eval.angles,
-                            peaks=exercise_eval.peaks,
-                            feedback=exercise_eval.feedback,
-                            times=exercise_eval.times,
-                            exercise_names=exercise_eval.exercise_name_list
+                            angles=controller.angles,
+                            peaks=controller.peaks,
+                            feedback=controller.feedback,
+                            times=controller.times,
+                            exercise_names=controller.exercise_name_list
                         )
-    exercise_eval.feedback_controller.logger.info('Saved file {}'.format(data_filename))
+    controller.logger.info('Saved file {}'.format(data_filename))
 
-    exercise_eval.feedback_controller.logger.handlers.clear()
+    controller.logger.handlers.clear()
     logging.shutdown()
     print('Done!')
 

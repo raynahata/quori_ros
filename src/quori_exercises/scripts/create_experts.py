@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from config import *
 import datetime
+import pickle
 
 #Storage
 all_exercises = {'bicep_curls': {'good': [], 'low range': [], 'high range': []}, 'lateral_raises': {'good': [], 'low range': [], 'high range': []}}
@@ -14,7 +15,7 @@ bag_names = ['Reid_bicep_curls.bag']
 
 #Labels
 labels = [
-    ['good', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good']
+    ['good', 'good', 'good', 'good', 'low range', 'low range', 'low range', 'good', 'good', 'good', 'good', 'good', 'good', 'good', 'good']
 ]
 
 #Exercise Names
@@ -81,5 +82,9 @@ for bag_name, current_exercise, label in zip(bag_names, current_exercises, label
                 ax[row, col].plot(np.arange(beg, end), angles[beg:end,ii], color)
                 
             ii += 1
+
+    #Save data
+    with open('new_experts.pickle', 'wb') as handle:
+        pickle.dump(all_exercises, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 plt.show()
