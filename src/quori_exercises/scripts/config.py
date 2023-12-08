@@ -26,8 +26,8 @@ EXERCISE_INFO = {
 
     },
     'lateral_raises': {
-        'segmenting_joints': [('right_shoulder', 0), 
-                                ('left_shoulder', 0)],
+        'segmenting_joints': [('right_shoulder', 2), 
+                                ('left_shoulder', 2)],
         'comparison_joints': [('right_shoulder', [0, 1, 2]), 
                         ('left_shoulder', [0, 1, 2]), 
                         ('right_elbow', [0, 1, 2]),
@@ -43,7 +43,7 @@ for exercise in EXERCISE_INFO:
     for group, ind in EXERCISE_INFO[exercise]['segmenting_joints']:
         EXERCISE_INFO[exercise]['segmenting_joint_inds'].append(ANGLE_ORDER[group][ind])
 
-with open('src/quori_exercises/experts/new_experts.pickle', 'rb') as handle:
+with open('../experts/new_experts.pickle', 'rb') as handle:
     NEW_EXPERTS = pickle.load(handle)
 
 for exercise in NEW_EXPERTS:
