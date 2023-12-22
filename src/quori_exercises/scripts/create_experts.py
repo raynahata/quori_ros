@@ -166,10 +166,7 @@ for bag_name, current_exercise, label in zip(bag_names, current_exercises, label
                 #peak_candidate = angles.shape[0]-20+min_angles_index[np.argmin(min_angles)]
 
                 peak_candidate = max_ind//2
-                if i%30==0:
-                    peak_candidate += i-30
-                else:
-                    peak_candidate += i-30
+                peak_candidate += idx-30
 
 
                 # print(np.min(angles[peaks[-1]:peak_candidate,:][:,EXERCISE_INFO[current_exercise]['segmenting_joint_inds']]))
