@@ -11,9 +11,9 @@ import logging
 import time
 
 #Parameters
-MIN_LENGTH = 20
-MAX_LENGTH = 40
-MAX_REPS = 5
+MIN_LENGTH = 80
+MAX_LENGTH = 105
+MAX_REPS = 30
 NUM_SETS = 1
 REST_TIME = 40
 ROUND_REST_TIME = 80

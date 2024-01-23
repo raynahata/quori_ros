@@ -43,7 +43,7 @@ for exercise in EXERCISE_INFO:
     for group, ind in EXERCISE_INFO[exercise]['segmenting_joints']:
         EXERCISE_INFO[exercise]['segmenting_joint_inds'].append(ANGLE_ORDER[group][ind])
 
-with open('../experts/new_experts.pickle', 'rb') as handle:
+with open('src/quori_exercises/experts/new_experts.pickle', 'rb') as handle:
     NEW_EXPERTS = pickle.load(handle)
 
 for exercise in NEW_EXPERTS:
