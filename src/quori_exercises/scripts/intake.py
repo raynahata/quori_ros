@@ -14,31 +14,37 @@ import time
 
 
 #Parameters
-MIN_LENGTH = 20
-MAX_LENGTH = 40
-MAX_REPS = 5
-NUM_SETS = 1
-REST_TIME = 40
-ROUND_REST_TIME = 80
-NUM_ROUNDS = 1 
-EXERCISE_LIST = ['lateral_raises']
+# MIN_LENGTH = 20
+# MAX_LENGTH = 40
+# MAX_REPS = 5
+# NUM_SETS = 1
+# REST_TIME = 40
+# ROUND_REST_TIME = 80
+# NUM_ROUNDS = 1 
+# EXERCISE_LIST = ['lateral_raises']
 
 #Change at beginning of study
 PARTICIPANT_ID = '1'
 VERBAL_CADENCE = 2 #1 is low, 2 is medium, 3 is high
-NONVERBAL_CADENCE = 2
-ROBOT_STYLE = 3
+#NONVERBAL_CADENCE = 2
+#ROBOT_STYLE = 3
 
 #Initialize ROS node
 rospy.init_node('study_session', anonymous=True)
 rate = rospy.Rate(10)
 
 #Start log file
-log_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.log'.format(ROBOT_STYLE,VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
-data_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.npz'.format(ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
+#log_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.log'.format(ROBOT_STYLE,VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
+#data_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.npz'.format(ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
+intake_log_filename= 'Intake_{}.log'.format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
+
 
 #Initialize evaluation object
-controller = ExerciseController(False, log_filename, ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE)
+intake_controller = ExerciseController(False, intake_log_filename)
+
+
+
+
 
 #For each exercise and set
 for round_num in range(1, NUM_ROUNDS+1):
