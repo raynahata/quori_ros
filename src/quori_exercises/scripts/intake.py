@@ -2,11 +2,13 @@
 import rospy
 import rosbag
 import numpy as np
+import sys 
 import matplotlib.pyplot as plt
 from config import *
 from ExerciseController import ExerciseController
 from datetime import datetime
 from pytz import timezone
+from intake_messages import *
 import logging
 import time
 
@@ -40,9 +42,76 @@ intake_log_filename= 'Intake_{}.log'.format(datetime.now().strftime("%Y-%m-%d--%
 
 
 #Initialize evaluation object
-intake_controller = ExerciseController(False, intake_log_filename)
+#intake_controller = ExerciseController(False, intake_log_filename)
 
+#logger edit!!
+#Initialize logging
+logger = logging.getLogger('logging')
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('src/quori_exercises/saved_intake_logs/{}'.format(intake_log_filename))
+fh.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
 
+#accessing the termical input 
+def get_terminal_input():
+    section=input("What section are you on? \n 1. Introduction \n 2. Fall Back \n 3. Exercise Explanation \n 4. Coach Type \n")
+    
+    m=[]
+    if section == "1":
+        m.append("Introduction")
+        
+        print("Introduction")
+    
+    elif section == "2": 
+        m.append("Fall Back")   
+        print("Fall Back")
+    
+    elif section == "3":
+        m.append("Exercise Explanation")
+        print("Exercise Explanation")
+        
+    elif section == "4":
+        m.append("Coach Type")
+        print("Coach Type")
+
+    INTAKE_MESSAGES[section][]
+
+def get_message(self, c, exercise_name):
+        
+        m = []
+        message_to_case = []
+        for ci in c:
+
+            #Temporary until LLM updates!
+            if self.robot_style in [0, 1, 2]:
+                m_to_add = ALL_MESSAGES[exercise_name][ci][2]
+            elif self.robot_style in [3, 4]:
+                m_to_add = ALL_MESSAGES[exercise_name][ci][3]
+
+            m.extend(m_to_add)
+            message_to_case.extend([ci]*len(m_to_add))
+
+        if len(m) > 0:
+            #Pick the option that has been chosen the least
+            counts = []
+            for option in m:
+                if option in self.message_log:
+                    counts.append(self.message_log.count(option))
+                else:
+                    counts.append(0)
+            
+            #Get the minimum count
+            ind = np.argmin(counts)
+            
+            return message_to_case[ind], m[ind]
+
+        return -1, ''
 
 
 
