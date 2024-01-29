@@ -50,23 +50,24 @@ def get_terminal_input():
         
     return m 
 
+get_terminal_input()
     
-while True:
-    m= get_terminal_input()
-    if m[1]=="quit":
-        break
-    print(INTAKE_MESSAGES[m[0]][m[1]])  
-    if input("Pressing enter will send the command to the robot! ") == "":
-        print(INTAKE_MESSAGES[m[0]][m[1]]) #this would be the push to robot commmand 
+# while True:
+#     m= get_terminal_input()
+#     if m[1]=="quit":
+#         break
+#     print(INTAKE_MESSAGES[m[0]][m[1]])  
+#     if input("Pressing enter will send the command to the robot! ") == "":
+#         print(INTAKE_MESSAGES[m[0]][m[1]]) #this would be the push to robot commmand 
     
-    elif input() =="quit":
-        break
-    else:
-        if input() == "back":
-            m=get_terminal_input()
+#     elif input() =="quit":
+#         break
+#     else:
+#         if input() == "back":
+#             m=get_terminal_input()
     
-    if input("Press 2 to Quit, otherwise enter\n") =="2":
-        break
+#     if input("Press 2 to Quit, otherwise enter\n") =="2":
+#         break
     
     
 

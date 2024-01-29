@@ -11,6 +11,7 @@ from pytz import timezone
 from intake_messages import *
 import logging
 import time
+import terminal_input as ti
 
 #Robot intake 
 
@@ -58,29 +59,9 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-#accessing the termical input 
-def get_terminal_input():
-    section=input("What section are you on? \n 1. Introduction \n 2. Fall Back \n 3. Exercise Explanation \n 4. Coach Type \n")
-    
-    m=[]
-    if section == "1":
-        m.append("Introduction")
-        
-        print("Introduction")
-    
-    elif section == "2": 
-        m.append("Fall Back")   
-        print("Fall Back")
-    
-    elif section == "3":
-        m.append("Exercise Explanation")
-        print("Exercise Explanation")
-        
-    elif section == "4":
-        m.append("Coach Type")
-        print("Coach Type")
+#accessing the terminal input 
+m=ti.get_terminal_input()
 
-    INTAKE_MESSAGES[section][]
 
 def get_message(self, c, exercise_name):
         

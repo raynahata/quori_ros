@@ -44,17 +44,7 @@ INTAKE_MESSAGES = {
     },
     
 
-    'Fall Back': {
-        'No answer':
-            ['Sorry, I am unable to answer your question'],
-
-        'Repeat':
-            ['Sorry, I did not understand you. Can you please repeat the question?'],
-
-        'Clarify':
-            ['Sorry, I am not sure I understood your question. Can you please clairfy the question?']
     
-    },
 
     'Exercise explanation': {
         'Start explanation':
@@ -79,8 +69,21 @@ INTAKE_MESSAGES = {
     },
 
     'Start exercise':{
+        'Start':
             ['Thank you for your responses. Let us begin the exercise.']
-    }
+    },
+
+    'Fall Back': {
+        'No answer':
+            ['Sorry, I am unable to answer your question'],
+
+        'Repeat':
+            ['Sorry, I did not understand you. Can you please repeat the question?'],
+
+        'Clarify':
+            ['Sorry, I am not sure I understood your question. Can you please clairfy the question?']
+    
+    },
 
 
 
