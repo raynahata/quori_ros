@@ -1,17 +1,49 @@
 INTAKE_MESSAGES = {
+    
     'Introduction':{
         'Greeting':
-            ['Welcome to the Quori Exercise Program. My name is Quori. I will be your personal trainer today. I will be guiding you through a series of exercises. How are you today?'],
+            ['Welcome and thank you for taking the time to be part of this research study. My name is Quori. How are you today?'],
+        
+        'Fun':
+            ['Did you do anything fun over the last couple days?'],
+        
         
         'Response positive':
-            ["Great. I am glad to hear that. Let's get started."],
+            ["Great. Thanks for sharing! I am glad to hear that. I hope that you will have fun during this session."],
         
 
         'Response negative':
-             ["Sorry to hear that. I hope that you will have fun during this session."]
+             ["I am sorry to hear that. I hope that you will have fun during this session."]
         
     },
+
+    'Consent':{
+        'Name':
+            ['Before we begin, I need to ask you some basic information. What is your name?'],
+        
+        'Age':
+            ['How old are you?'],
+        
+        'Exlanation':
+            ['Today, you will be completing a series of exercises and I will be evaluating you on your performance. \
+             I will be recoring your video and audio during the session. I will also be asking you questions about your experience. \
+             I will be using this information to improve my coaching skills. Do you have any questions?'],
+        
+        'Sign consent':
+            ['Before we begin, I need you to sign a consent form. Please sign the form on the tablet in front of you.']
+    },
+
     
+    'Evaluation':{
+        'Pain':
+            ['Are you experiencing any pain or stiffness today?'],
+
+        'Energy Level':
+            ['How is your energy level today?']
+
+    },
+    
+
     'Fall Back': {
         'No answer':
             ['Sorry, I am unable to answer your question'],
@@ -21,28 +53,35 @@ INTAKE_MESSAGES = {
 
         'Clarify':
             ['Sorry, I am not sure I understood your question. Can you please clairfy the question?']
-
-        
-        
+    
     },
 
     'Exercise explanation': {
-        'Lateral raises':
-            ['The exercise you will be doing is called lateral raises. Please stand up straight with your arms at your sides. Raise your arms to the side until they are parallel to the ground. Then lower your arms back to your sides. Please do this for 20 seconds.'],
-
-        'Bicep curls':
-            ['The exercise you will be doing is called bicep curls. Please stand up straight with your arms at your sides. Raise your arms to your shoulders. Then lower your arms back to your sides. Please do this for 20 seconds.']
+        'Start explanation':
+            ['You will be doing two types of exercises today. One is lateral raises and the other is bicep curls. INSERT INFO ON WHY THEY ARE GOOD'],
         
+        'Explain exercise routine':
+            ['You will perform three rounds with 4 sets each. In each round, two of the sets will be bicep curls and two of the sets will be lateral raises.\
+             In between each set, there will be a rest period. After each set, the robot will ask you to rate how difficult that set was from 1 to 10.\
+             Please take a look at the sheet next to you that explains what each rating means.\
+             Do you have any questions so far?'],
+        
+        'Dumbells':
+            ['We have some dumbbells here for you to use if you are comfortable.\
+             You can feel free to use them to perform the exercises, but if at any point the weight becomes too much,\
+            you can feel free to drop them in between sets and just use bodyweight.']
+    
     },
 
     'Coach type':{
         'Ask type':
-            ['In order to be the best exercise coach I can be, I would like to ask you what type of coaching you would prefer. Would you like me to be a firm coach or an encourgaing coach?']
+            ['Finally, in order to be the best exercise coach I can be, I would like to ask you what type of coaching you would prefer. Would you like me to be a firm coach or an encourgaing coach?']
+    },
 
+    'Start exercise':{
+            ['Thank you for your responses. Let us begin the exercise.']
     }
-        
-    
-    
+
 
 
 }
