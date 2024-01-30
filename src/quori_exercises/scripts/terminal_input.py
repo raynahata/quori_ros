@@ -50,7 +50,7 @@ def get_terminal_input():
         
     return m 
 
-get_terminal_input()
+
     
 # while True:
 #     m= get_terminal_input()

@@ -13,39 +13,21 @@ import logging
 import time
 import terminal_input as ti
 
-#Robot intake 
-
-
-#Parameters
-# MIN_LENGTH = 20
-# MAX_LENGTH = 40
-# MAX_REPS = 5
-# NUM_SETS = 1
-# REST_TIME = 40
-# ROUND_REST_TIME = 80
-# NUM_ROUNDS = 1 
-# EXERCISE_LIST = ['lateral_raises']
-
-#Change at beginning of study
+#Change at the beginning of each session
 PARTICIPANT_ID = '1'
-VERBAL_CADENCE = 2 #1 is low, 2 is medium, 3 is high
-#NONVERBAL_CADENCE = 2
-#ROBOT_STYLE = 3
+
 
 #Initialize ROS node
 rospy.init_node('study_session', anonymous=True)
 rate = rospy.Rate(10)
 
 #Start log file
-#log_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.log'.format(ROBOT_STYLE,VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
-#data_filename = 'Style_{}_Verbal_{}_Nonverbal_{}_{}.npz'.format(ROBOT_STYLE, VERBAL_CADENCE, NONVERBAL_CADENCE, datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
 intake_log_filename= 'Intake_{}.log'.format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
 
 
 #Initialize evaluation object
 #intake_controller = ExerciseController(False, intake_log_filename)
 
-#logger edit!!
 #Initialize logging
 logger = logging.getLogger('logging')
 logger.setLevel(logging.DEBUG)
@@ -59,40 +41,11 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
+done_intake = False
 #accessing the terminal input 
-m=ti.get_terminal_input()
 
 
-def get_message(self, c, exercise_name):
-        
-        m = []
-        message_to_case = []
-        for ci in c:
 
-            #Temporary until LLM updates!
-            if self.robot_style in [0, 1, 2]:
-                m_to_add = ALL_MESSAGES[exercise_name][ci][2]
-            elif self.robot_style in [3, 4]:
-                m_to_add = ALL_MESSAGES[exercise_name][ci][3]
-
-            m.extend(m_to_add)
-            message_to_case.extend([ci]*len(m_to_add))
-
-        if len(m) > 0:
-            #Pick the option that has been chosen the least
-            counts = []
-            for option in m:
-                if option in self.message_log:
-                    counts.append(self.message_log.count(option))
-                else:
-                    counts.append(0)
-            
-            #Get the minimum count
-            ind = np.argmin(counts)
-            
-            return message_to_case[ind], m[ind]
-
-        return -1, ''
 
 
 
@@ -179,15 +132,8 @@ for round_num in range(1, NUM_ROUNDS+1):
             #             robot_message = "Rest for {} more seconds.".format(int(ROUND_REST_TIME/2))
             #             exercise_eval.feedback_controller.message(robot_message)
     
-    controller.plot_angles()
+   
 
-    np.savez('src/quori_exercises/saved_data/{}'.format(data_filename),      
-                            angles=controller.angles,
-                            peaks=controller.peaks,
-                            feedback=controller.feedback,
-                            times=controller.times,
-                            exercise_names=controller.exercise_name_list
-                        )
     controller.logger.info('Saved file {}'.format(data_filename))
 
     controller.logger.handlers.clear()
