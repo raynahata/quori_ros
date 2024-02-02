@@ -1,6 +1,7 @@
 #Current iteration of the terminal inoutsfrom intake_messages import *
 from intake_messages import *
 
+
 def get_key():
     try:
         section_num_input=input("What section are you on? \n 1. Introduction \n 2.Consent \
@@ -9,7 +10,7 @@ def get_key():
         if section_num_input == "1": key="Introduction"
         elif section_num_input == "2": key= "Consent"
         elif section_num_input == "3": key= "Evaluation"
-        elif section_num_input == "4": key="Exercise"
+        elif section_num_input == "4": key="Exercise explanation"
         elif section_num_input == "5": key= "Coach Type"
         elif section_num_input == "6": key= "Fall Back"
         return key
@@ -57,6 +58,7 @@ def get_key_evaluation():
         return get_key_evaluation()
     
 
+#fix here new cat
 def get_key_exercise():
     response_num=input("1. Start explanation \n 2. Explain exercise routine \n 3. Dumbbells \n")
     try:
@@ -68,6 +70,7 @@ def get_key_exercise():
         print("Invalid input")
         return get_key_exercise()
     
+
 
 def get_key_coach_type():
     response_num=input("Ask coach type question?")
@@ -100,11 +103,11 @@ def get_terminal_input():
         key_specific=get_key_consent()
     elif key == "Evaluation":
         key_specific=get_key_evaluation()
-    elif key == "Exercise":
+    elif key == "Exercise explanation":
         key_specific=get_key_exercise()
     elif key == "Coach Type":
         key_specific=get_key_coach_type()
-    elif key == "Fall Back":
+    elif key == "Fallqu Back":
         key_specific=get_key_fall_back()
     return key, key_specific
 

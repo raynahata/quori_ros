@@ -1,3 +1,4 @@
+#iteration one of calling terminal inputs 
 from intake_messages import *
 
 
@@ -28,7 +29,7 @@ def get_terminal_input():
         elif response == "2": m.append("Energy Level")
     
     elif section == "4":
-        m.append("Exercise")
+        m.append("Exercise explanation")
         response=input("1. Start explanation \n 2. Explain exercise routine \n 3. Dumbells \n")
         if response == "1": m.append("Start explanation")
         elif response == "2": m.append("Explain exercise routine")

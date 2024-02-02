@@ -24,7 +24,7 @@ INTAKE_MESSAGES = {
         'Age':
             ['How old are you?'],
         
-        'Exlanation':
+        'Explanation':
             ['Today, you will be completing a series of exercises and I will be evaluating you on your performance. \
              I will be recoring your video and audio during the session. I will also be asking you questions about your experience. \
              I will be using this information to improve my coaching skills. Do you have any questions?'],
@@ -42,8 +42,6 @@ INTAKE_MESSAGES = {
             ['How is your energy level today?']
 
     },
-    
-
     
 
     'Exercise explanation': {
