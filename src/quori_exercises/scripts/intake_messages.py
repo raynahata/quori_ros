@@ -29,8 +29,9 @@ INTAKE_MESSAGES = {
              I will be recoring your video and audio during the session. I will also be asking you questions about your experience. \
              I will be using this information to improve my coaching skills. Do you have any questions?'],
         
-        'Sign consent':
-            ['Before we begin, I need you to sign a consent form. Please sign the form on the tablet in front of you.']
+        
+        #'Sign consent':
+           # ['Before we begin, I need you to sign a consent form. Please sign the form on the tablet in front of you.']
     },
 
     
@@ -54,7 +55,7 @@ INTAKE_MESSAGES = {
              Please take a look at the sheet next to you that explains what each rating means.\
              Do you have any questions so far?'],
         
-        'Dumbells':
+        'Dumbbells':
             ['We have some dumbbells here for you to use if you are comfortable.\
              You can feel free to use them to perform the exercises, but if at any point the weight becomes too much,\
             you can feel free to drop them in between sets and just use bodyweight.']
@@ -63,7 +64,7 @@ INTAKE_MESSAGES = {
 
     'Coach type':{
         'Ask type':
-            ['Finally, in order to be the best exercise coach I can be, I would like to ask you what type of coaching you would prefer. Would you like me to be a firm coach or an encourgaing coach?']
+            ['I have two different types of coaching styles I can be depending on what you prefer. Type 1 is more firm with less encouragement and Type 2 is less firm with more encouragement. Which type would you prefer: Type 1 or Type 2?']
     },
 
     'Start exercise':{
@@ -71,7 +72,7 @@ INTAKE_MESSAGES = {
             ['Thank you for your responses. Let us begin the exercise.']
     },
 
-    'Fall Back': {
+    'Fall back': {
         'No answer':
             ['Sorry, I am unable to answer your question'],
 
@@ -79,7 +80,7 @@ INTAKE_MESSAGES = {
             ['Sorry, I did not understand you. Can you please repeat the question?'],
 
         'Clarify':
-            ['Sorry, I am not sure I understood your question. Can you please clairfy the question?']
+            ['Sorry, I am not sure I understood your question. Can you please clarify the question?']
     
     },
 

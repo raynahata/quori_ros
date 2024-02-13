@@ -1,17 +1,17 @@
-#Current iteration of the terminal inoutsfrom intake_messages import *
+#Current iteration of the terminal inputs
 from intake_messages import *
 
 def get_key():
     try:
         section_num_input=input("What section are you on? \n 1. Introduction \n 2.Consent \
-                    \n 3. Evaluation \n 4. Exercise  \n 5. Coach Type \n 6. Fall Back \n")
+                    \n 3. Evaluation \n 4. Exercise explanation  \n 5. Coach Type \n 6. Fall Back \n")
         
         if section_num_input == "1": key="Introduction"
         elif section_num_input == "2": key= "Consent"
         elif section_num_input == "3": key= "Evaluation"
-        elif section_num_input == "4": key="Exercise"
-        elif section_num_input == "5": key= "Coach Type"
-        elif section_num_input == "6": key= "Fall Back"
+        elif section_num_input == "4": key="Exercise explanation"
+        elif section_num_input == "5": key= "Coach type"
+        elif section_num_input == "6": key= "Fall back"
         return key
         
         
@@ -21,7 +21,7 @@ def get_key():
         
     
 def get_key_intro():
-    response_num=input("1. Greeting \n 2. Response positive \n 3. Response negative \n")
+    response_num=input("1. Greeting \n 2. Fun \n 3. Response positive \n 4. Response negative \n")
     try:
         if response_num == "1": key_specific="Greeting"
         elif response_num== "2": key_specific="Fun"
@@ -34,12 +34,12 @@ def get_key_intro():
     
 
 def get_key_consent():
-    response_num=input("1. Name \n 2. Age \n 3. Explanation \n 4. Sign consent \n")
+    response_num=input("1. Name \n 2. Age \n 3. Explanation \n")
     try:
         if response_num == "1": key_specific="Name"
         elif response_num== "2": key_specific="Age"
         elif response_num == "3": key_specific="Explanation"
-        elif response_num == "4": key_specific="Sign consent"
+       # elif response_num == "4": key_specific="Sign consent"
         return key_specific
     except:
         print("Invalid input")
@@ -100,11 +100,11 @@ def get_terminal_input():
         key_specific=get_key_consent()
     elif key == "Evaluation":
         key_specific=get_key_evaluation()
-    elif key == "Exercise":
+    elif key == "Exercise explanation":
         key_specific=get_key_exercise()
-    elif key == "Coach Type":
+    elif key == "Coach type":
         key_specific=get_key_coach_type()
-    elif key == "Fall Back":
+    elif key == "Fall back":
         key_specific=get_key_fall_back()
     return key, key_specific
 

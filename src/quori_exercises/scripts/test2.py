@@ -1,6 +1,12 @@
 #Current iteration of the terminal inoutsfrom intake_messages import *
 from intake_messages import *
 
+import logging
+import time
+import terminal_input as ti
+
+
+
 
 def get_key():
     try:
@@ -107,12 +113,13 @@ def get_terminal_input():
         key_specific=get_key_exercise()
     elif key == "Coach Type":
         key_specific=get_key_coach_type()
-    elif key == "Fallqu Back":
+    elif key == "Fall Back":
         key_specific=get_key_fall_back()
     return key, key_specific
 
     
 while True:
+    
     key, key_specific=get_terminal_input()
     print(key, key_specific)
     print(INTAKE_MESSAGES[key][key_specific])
