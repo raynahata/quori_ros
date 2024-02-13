@@ -1,32 +1,46 @@
 #!/usr/bin/env python3
 # import rospy
 # import rosbag
-import numpy
+#import numpy
 import sys 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 #from config import *
 #from ExerciseController import ExerciseController
 from datetime import datetime
-from pytz import timezone
+#from pytz import timezone
 from intake_messages import *
 import logging
 import time
 import terminal_input as ti
+import os
 
 #Change at the beginning of each session
 PARTICIPANT_ID = '1'
 
+folder_path = '/Users/raynahata/Desktop/Github/quori_ros/src/quori_exercises/intake_logs' 
+if not os.path.exists(folder_path): 
+    os.makedirs(folder_path) 
+# file_name = 'example.txt' 
+# file_path = os.path.join(folder_path, file_name) 
+# with open(file_path, 'w') as f: 
+#     f.write('This is an example file.') 
 
-# #Initialize ROS node
-# rospy.init_node('study_session', anonymous=True)
-# rate = rospy.Rate(10)
+
+
+
 
 #Start log file
+
 intake_log_filename= 'Intake_{}.log'.format(datetime.now().strftime("%Y-%m-%d--%H-%M-%S"))
+#logging.basicConfig(filename=intake_log_filename,filemode='w', level=logging.INFO)
+
+#logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 
 
 #Initialize evaluation object
 #intake_controller = ExerciseController(False, intake_log_filename)
+#file = open('myfile.txt', 'w')
+#file.close()
 
 #Initialize logging
 logger = logging.getLogger('logging')
@@ -53,7 +67,7 @@ while not done_intake:
     robot_message = INTAKE_MESSAGES[key][key_specific]
     logger.info('Robot message: {}'.format(robot_message))
     #intake_controller.message(robot_message)
-    done_intake = True
+    #done_intake = True
     #rospy.sleep(2)
 
 logger.handlers.clear()
