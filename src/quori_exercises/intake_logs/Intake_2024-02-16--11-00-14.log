@@ -1,0 +1,27 @@
+2024-02-16 11:00:14,070 - INFO - Starting intake
+2024-02-16 11:00:16,352 - INFO - Key: Introduction
+2024-02-16 11:00:16,352 - INFO - Key Specific: Greeting
+2024-02-16 11:00:16,352 - INFO - Message: ['Welcome and thank you for taking the time to be part of this research study. My name is Quori. How are you today?']
+2024-02-16 11:00:22,831 - INFO - Key: Consent
+2024-02-16 11:00:22,832 - INFO - Key Specific: Name
+2024-02-16 11:00:22,832 - INFO - Message: ['Before we begin, I need to ask you some basic information. What is your name?']
+2024-02-16 11:00:27,231 - INFO - Key: Consent
+2024-02-16 11:00:27,231 - INFO - Key Specific: Age
+2024-02-16 11:00:27,232 - INFO - Message: ['How old are you?']
+2024-02-16 11:00:29,755 - INFO - Key: Consent
+2024-02-16 11:00:29,756 - INFO - Key Specific: Explanation
+2024-02-16 11:00:29,756 - INFO - Message: ['Today, you will be completing a series of exercises and I will be evaluating you on your performance.              I will be recoring your video and audio during the session. I will also be asking you questions about your experience.              I will be using this information to improve my coaching skills. Do you have any questions?']
+2024-02-16 11:00:33,281 - INFO - Key: Evaluation
+2024-02-16 11:00:33,282 - INFO - Key Specific: Pain
+2024-02-16 11:00:33,282 - INFO - Message: ['Are you experiencing any pain or stiffness today?']
+2024-02-16 11:00:37,470 - INFO - Key: Evaluation
+2024-02-16 11:00:37,471 - INFO - Key Specific: Energy Level
+2024-02-16 11:00:37,471 - INFO - Message: ['How is your energy level today?']
+2024-02-16 11:00:40,532 - INFO - Key: Exercise explanation
+2024-02-16 11:00:40,532 - INFO - Key Specific: Start explanation
+2024-02-16 11:00:40,532 - INFO - Message: ['You will be doing two types of exercises today. One is lateral raises and the other is bicep curls. INSERT INFO ON WHY THEY ARE GOOD']
+2024-02-16 11:00:45,620 - INFO - Key: Exercise explanation
+2024-02-16 11:00:45,621 - INFO - Key Specific: Explain exercise routine
+2024-02-16 11:00:45,621 - INFO - Message: ['You will perform three rounds with 4 sets each. In each round, two of the sets will be bicep curls and two of the sets will be lateral raises.             In between each set, there will be a rest period. After each set, the robot will ask you to rate how difficult that set was from 1 to 10.             Please take a look at the sheet next to you that explains what each rating means.             Do you have any questions so far?']
+2024-02-16 11:00:50,041 - INFO - Key: Exercise explanation
+2024-02-16 11:00:50,042 - INFO - Key Specific: Dumbells

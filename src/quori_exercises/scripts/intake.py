@@ -1,3 +1,5 @@
+#This is the file to run to start the intake proccess
+
 #!/usr/bin/env python3
 # import rospy
 # import rosbag
@@ -57,18 +59,46 @@ logger.addHandler(ch)
 
 done_intake = False
 #accessing the terminal input 
+logger.info('Starting intake1')
 
-logger.info('Starting intake')
 while not done_intake:
-    key, key_specific = ti.get_terminal_input()
+    key, key_specific=ti.get_terminal_input()
     logger.info('Key: {}'.format(key))
     logger.info('Key Specific: {}'.format(key_specific))
     logger.info('Message: {}'.format(INTAKE_MESSAGES[key][key_specific]))
-    robot_message = INTAKE_MESSAGES[key][key_specific]
-    logger.info('Robot message: {}'.format(robot_message))
-    #intake_controller.message(robot_message)
-    #done_intake = True
-    #rospy.sleep(2)
+    cont=input("Quit or Continue?")
+    if cont == "":
+        continue
+    elif cont=="quit":
+        done_intake=True
+    
+  
+    print("")
+    
+
+
+# while True:
+#     key, key_specific=ti.get_terminal_input()
+#     #print(key, key_specific)
+#     #print(INTAKE_MESSAGES[key][key_specific])
+#     cont=input("Quit or Continue?")
+#     if cont == "":
+#         continue
+#     elif cont=="quit":
+#         break
+#     print("")
+
+# logger.info('Starting intake')
+# while not done_intake:
+#     #key, key_specific = ti.get_terminal_input()
+#     logger.info('Key: {}'.format(key))
+#     logger.info('Key Specific: {}'.format(key_specific))
+#     logger.info('Message: {}'.format(INTAKE_MESSAGES[key][key_specific]))
+#     #robot_message = INTAKE_MESSAGES[key][key_specific]
+#     #logger.info('Robot message: {}'.format(robot_message))
+#     #intake_controller.message(robot_message)
+#     done_intake = True
+#     #rospy.sleep(2)
 
 logger.handlers.clear()
 logging.shutdown()

@@ -87,7 +87,7 @@ for round_num in range(1, NUM_ROUNDS+1):
 
             robot_message = "Almost done."
             controller.message(robot_message)
-            rospy.sleep(3)
+            rospy.sleep(3)   
 
             robot_message = "Rest."
             controller.message(robot_message)
