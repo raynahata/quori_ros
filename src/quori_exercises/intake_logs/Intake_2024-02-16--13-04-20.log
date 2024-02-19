@@ -1,0 +1,10 @@
+2024-02-16 13:04:20,043 - INFO - Starting intake1
+2024-02-16 13:04:21,774 - INFO - Key: Introduction
+2024-02-16 13:04:21,775 - INFO - Key Specific: Greeting
+2024-02-16 13:04:21,775 - INFO - Message: ['Welcome and thank you for taking the time to be part of this research study. My name is Quori. How are you today?']
+2024-02-16 13:04:24,775 - INFO - Key: Introduction
+2024-02-16 13:04:24,776 - INFO - Key Specific: Fun
+2024-02-16 13:04:24,776 - INFO - Message: ['Did you do anything fun over the last couple days?']
+2024-02-16 13:04:28,988 - INFO - Key: Introduction
+2024-02-16 13:04:28,989 - INFO - Key Specific: Response positive
+2024-02-16 13:04:28,989 - INFO - Message: ['Great. Thanks for sharing! I am glad to hear that. I hope that you will have fun during this session.']

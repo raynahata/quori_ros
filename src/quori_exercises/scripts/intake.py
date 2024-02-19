@@ -15,7 +15,7 @@ import logging
 import time
 import terminal_input as ti
 import os
-
+from gtts import gTTS
 #Change at the beginning of each session
 PARTICIPANT_ID = '1'
 
@@ -59,10 +59,11 @@ logger.addHandler(ch)
 
 done_intake = False
 #accessing the terminal input 
-logger.info('Starting intake1')
+logger.info('Starting intake')
 
 while not done_intake:
     key, key_specific=ti.get_terminal_input()
+
     logger.info('Key: {}'.format(key))
     logger.info('Key Specific: {}'.format(key_specific))
     logger.info('Message: {}'.format(INTAKE_MESSAGES[key][key_specific]))
