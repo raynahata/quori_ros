@@ -2,6 +2,11 @@
 #This is a script that allows the user to input the key and key_specific to get the corresponding message from the intake_messages.py file
 from intake_messages import *
 
+#back=False
+
+
+
+
 def get_key():
     try:
         section_num_input=input("What section are you on? \n 1. Introduction \n 2.Consent \
@@ -30,8 +35,6 @@ def get_key_intro():
         elif response_num == "3": key_specific="Response positive"
         elif response_num == "4": key_specific="Response negative"
         elif response_num == "5": key_specific="back"
-               
-
         return key_specific
     except:
         print("Invalid input")
@@ -45,7 +48,6 @@ def get_key_consent():
         elif response_num== "2": key_specific="Age"
         elif response_num == "3": key_specific="Explanation"
         elif response_num == "4": key_specific="back"
-       # elif response_num == "4": key_specific="Sign consent"
         return key_specific
     except:
         print("Invalid input")
@@ -102,8 +104,10 @@ def get_key_fall_back():
         return get_key_fall_back()
    
 
-def get_terminal_input():
-    key=get_key()
+#TODO: Split up get term inout and fix in the intake file 
+
+def get_terminal_input(key):
+   #key=get_key()
     if key == "Introduction":
         key_specific=get_key_intro()
     elif key == "Consent":
@@ -117,10 +121,16 @@ def get_terminal_input():
     elif key == "Fall back":
         key_specific=get_key_fall_back()
     if key_specific == "back":
-        return get_terminal_input()
-        
+       # back=True
+        #return get_key()
+        return "back"
 
-    return key, key_specific
+    #def go_back():
+
+
+
+
+    return key_specific
 
 
     
