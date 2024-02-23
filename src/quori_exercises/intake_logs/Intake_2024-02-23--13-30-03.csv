@@ -1,0 +1,74 @@
+2024-02-23,13:30:03.718,Begin, Starting intake
+2024-02-23,13:30:07.376,Key, Introduction
+2024-02-23,13:30:10.886,Key Specific, Greeting
+2024-02-23,13:30:14.462,Begin speaking,['Welcome and thank you for taking the time to be part of this research study. My name is Quori. How are you today? ']
+2024-02-23,13:30:24.363,End speaking
+2024-02-23,13:30:25.289,Continue
+2024-02-23,13:30:28.964,Key, Introduction
+2024-02-23,13:30:32.115,Key Specific, Fun
+2024-02-23,13:30:33.065,Begin speaking,[' Did you do anything fun over the last couple days? ']
+2024-02-23,13:30:37.918,End speaking
+2024-02-23,13:30:38.565,Continue
+2024-02-23,13:30:40.000,Key, Introduction
+2024-02-23,13:30:42.085,Key Specific, Response positive
+2024-02-23,13:30:42.728,Begin speaking,[' Great. Thanks for sharing! I am glad to hear that. I hope that you will have fun during this session. ']
+2024-02-23,13:30:51.611,End speaking
+2024-02-23,13:30:52.290,Continue
+2024-02-23,13:30:54.453,Key, Consent
+2024-02-23,13:30:56.563,Key Specific, Name
+2024-02-23,13:30:57.590,Begin speaking,['Before we begin I need to ask you some basic information. What is your name? ']
+2024-02-23,13:31:04.020,End speaking
+2024-02-23,13:31:04.741,Continue
+2024-02-23,13:31:05.802,Key, Consent
+2024-02-23,13:31:08.426,Key Specific, Age
+2024-02-23,13:31:09.078,Begin speaking,['How old are you?']
+2024-02-23,13:31:11.604,End speaking
+2024-02-23,13:31:12.140,Continue
+2024-02-23,13:31:13.665,Key, Consent
+2024-02-23,13:31:15.088,Key Specific, Explanation
+2024-02-23,13:31:17.238,Begin speaking,['Today you will be completing a series of exercises and I will be evaluating you on your performance.              I will be recording your video and audio during the session. I will also be asking you questions about your experience.              I will be using this information to improve my coaching skills. Do you have any questions?']
+2024-02-23,13:31:40.378,End speaking
+2024-02-23,13:31:41.119,Continue
+2024-02-23,13:31:43.765,Key, Consent
+2024-02-23,13:31:46.066,Key Specific, back
+2024-02-23,13:31:48.277,Key, Evaluation
+2024-02-23,13:31:49.517,Key Specific, Pain
+2024-02-23,13:31:50.590,Begin speaking,['Are you experiencing any pain or stiffness today?']
+2024-02-23,13:31:55.403,End speaking
+2024-02-23,13:31:56.064,Continue
+2024-02-23,13:31:57.300,Key, Evaluation
+2024-02-23,13:31:59.351,Key Specific, Energy Level
+2024-02-23,13:31:59.864,Begin speaking,['How is your energy level today?']
+2024-02-23,13:32:03.399,End speaking
+2024-02-23,13:32:03.990,Continue
+2024-02-23,13:32:05.827,Key, Evaluation
+2024-02-23,13:32:08.766,Key Specific, back
+2024-02-23,13:32:11.664,Key, Exercise explanation
+2024-02-23,13:32:12.614,Key Specific, Start explanation
+2024-02-23,13:32:13.813,Begin speaking,['You will be doing two types of exercises today. One is lateral raises and the other is bicep curls. INSERT INFO ON WHY THEY ARE GOOD']
+2024-02-23,13:32:25.211,End speaking
+2024-02-23,13:32:26.040,Continue
+2024-02-23,13:32:27.842,Key, Exercise explanation
+2024-02-23,13:32:29.114,Key Specific, Explain exercise routine
+2024-02-23,13:32:30.211,Begin speaking,['You will perform three rounds with 4 sets each. In each round two of the sets will be bicep curls and two of the sets will be lateral raises.             In between each set there will be a rest period. After each set the robot will ask you to rate how difficult that set was from 1 to 10.             Please take a look at the sheet next to you that explains what each rating means.             Do you have any questions so far?']
+2024-02-23,13:32:59.566,End speaking
+2024-02-23,13:33:00.516,Continue
+2024-02-23,13:33:03.051,Key, Exercise explanation
+2024-02-23,13:33:06.476,Key Specific, Dumbbells
+2024-02-23,13:33:07.077,Begin speaking,['We have some dumbbells here for you to use if you are comfortable.             You can feel free to use them to perform the exercises but if at any point the weight becomes too much,            you can feel free to drop them in between sets and just use bodyweight.']
+2024-02-23,13:33:25.705,End speaking
+2024-02-23,13:33:26.992,Continue
+2024-02-23,13:33:29.766,Key, Coach type
+2024-02-23,13:33:31.067,Key Specific, Ask type
+2024-02-23,13:33:32.862,Begin speaking,['I have two different types of coaching styles I can be depending on what you prefer. Type 1 is more firm with less encouragement and Type 2 is less firm with more encouragement. Which type would you prefer: Type 1 or Type 2?']
+2024-02-23,13:33:50.943,End speaking
+2024-02-23,13:33:51.566,Continue
+2024-02-23,13:33:55.266,Key, Coach type
+2024-02-23,13:33:57.940,Key Specific, back
+2024-02-23,13:34:04.793,Key, Introduction
+2024-02-23,13:34:10.763,Key Specific, back
+2024-02-23,13:34:13.477,Key, Fall back
+2024-02-23,13:34:14.693,Key Specific, No answer
+2024-02-23,13:34:15.494,Begin speaking,['Sorry I am unable to answer your question']
+2024-02-23,13:34:20.025,End speaking
+2024-02-23,13:34:21.628,Quit

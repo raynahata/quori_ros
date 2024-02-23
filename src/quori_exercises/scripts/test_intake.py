@@ -42,7 +42,7 @@ def get_message():
         logger.info('Key Specific, {}'.format(key_specific))
         return get_message()
     logger.info('Key Specific, {}'.format(key_specific))
-    logger.info('Message, {}'.format(INTAKE_MESSAGES[key][key_specific]))
+    #logger.info('Message, {}'.format(INTAKE_MESSAGES[key][key_specific]))
 
     return INTAKE_MESSAGES[key][key_specific]
 
@@ -81,7 +81,7 @@ fh.setFormatter(formatter)
 fh2.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(fh)
-logger.addHandler(ch)
+#logger.addHandler(ch)
 logger2.addHandler(fh2)
 #logger2.addHandler(ch)
 
@@ -91,6 +91,7 @@ done_intake = False
 #accessing the terminal input 
 logger.info('Begin, {}'.format('Starting intake'))
 logger2.info('Begin, {}'.format('Starting intake'))
+print("starting intake")
 
 
 # with keyboard.Listener(
@@ -103,18 +104,31 @@ listener.start()
 
 while not done_intake:
     message=get_message()
+    print(message)
     # print("here")
-    cont=input("Quit or Continue?")
-
-    if cont == "":
+    speak=input("Press enter to speak, else type back to go back")
+    if speak == "":
         #logger.info('Begin speaking')
+        print("Begin speaking")
         logger.info('Begin speaking,{}'.format(message))
         sp.text_to_speech(message)
         logger.info('End speaking')
+        print("End speaking")
+        
+    elif speak=="back":
+        #done_intake=True
+        #logger.info('Quit')
         continue
-    elif cont=="quit":
+
+
+    
+    cont=input("Quit or Continue?")
+    if cont=="quit":
         done_intake=True
         logger.info('Quit')
+    elif cont=="":
+        logger.info('Continue')
+        continue
    
 
 listener.stop()
@@ -122,6 +136,5 @@ logger.handlers.clear()
 logging.shutdown()
 print('Done!')
 
-#TODO: Add a back option logging  --> option 1: create new CSV file
-# Option 2: Add keyboard listener to the intake file 
+
 

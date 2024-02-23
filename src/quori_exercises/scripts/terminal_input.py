@@ -18,7 +18,7 @@ def get_key():
         elif section_num_input == "4": key="Exercise explanation"
         elif section_num_input == "5": key= "Coach type"
         elif section_num_input == "6": key= "Fall back"
-        #elif section_num_input == "7": key= "back"
+       #elif section_num_input == "7": key= "quit"
         return key
         
         
@@ -120,15 +120,12 @@ def get_terminal_input(key):
         key_specific=get_key_coach_type()
     elif key == "Fall back":
         key_specific=get_key_fall_back()
-    if key_specific == "back":
-       # back=True
-        #return get_key()
-        return "back"
+    # if key_specific == "back":
+    #    # back=True
+    #     #return get_key()
+    #     return "back"
 
     #def go_back():
-
-
-
 
     return key_specific
 

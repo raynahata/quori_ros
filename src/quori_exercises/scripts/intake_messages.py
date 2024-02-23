@@ -57,7 +57,7 @@ INTAKE_MESSAGES = {
         
         'Dumbbells':
             ['We have some dumbbells here for you to use if you are comfortable.\
-             You can feel free to use them to perform the exercises but if at any point the weight becomes too much,\
+             You can feel free to use them to perform the exercises but if at any point the weight becomes too much\
             you can feel free to drop them in between sets and just use bodyweight.']
     
     },

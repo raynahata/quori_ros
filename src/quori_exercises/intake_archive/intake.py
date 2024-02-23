@@ -78,6 +78,10 @@ logger.info('Begin, {}'.format('Starting intake'))
 def get_message():
     key=ti.get_key()
     logger.info('Key, {}'.format(key))
+    # if key=="quit":
+    #     done_intake=True
+    #     logger.info('Quit')
+    #     return
 
     key_specific=ti.get_terminal_input(key)
     if key_specific=="back":
@@ -91,19 +95,27 @@ def get_message():
 
 while not done_intake:
     message=get_message()
-    print("here")
+    #print("here")
 
-    cont=input("Quit or Continue?")
+    speak=input("Press enter to speak, else type back to go back")
 
-    if cont == "":
+    if speak == "":
         #logger.info('Begin speaking')
         logger.info('Begin speaking,{}'.format(message))
         sp.text_to_speech(message)
         logger.info('End speaking')
+        
+    elif speak=="back":
+        #done_intake=True
+        #logger.info('Quit')
         continue
-    elif cont=="quit":
+
+    cont=input("Quit or Continue?")
+    if cont=="quit":
         done_intake=True
         logger.info('Quit')
+    elif cont=="":
+        continue
     # key=ti.get_key()
    # logger.info('Key, {}'.format(key))
 
