@@ -3,9 +3,6 @@
 #!/usr/bin/env python3
 # import rospy
 # import rosbag
-import numpy
-import sys 
-import matplotlib.pyplot as plt
 #from config import *
 #from ExerciseController import ExerciseController
 from datetime import datetime
