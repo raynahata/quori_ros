@@ -24,11 +24,7 @@ def on_press(key):
     except AttributeError:
         logger2.info(f'Special key {key} pressed')
         return
-# def on_release(key):
-#     logger.info(f'Key {key} released')
-#     if key == keyboard.Key.esc:
-#         # Stop listener
-#         return False
+
 
 def get_message():
     key=ti.get_key()
@@ -38,15 +34,19 @@ def get_message():
     if key_specific=="back":
         logger.info('Key Specific, {}'.format(key_specific))
         return get_message()
+    elif key_specific=="quit":
+        logger.info('Quit')
+        return "quit"
+       
     logger.info('Key Specific, {}'.format(key_specific))
-    #logger.info('Message, {}'.format(INTAKE_MESSAGES[key][key_specific]))
 
+        
     return INTAKE_MESSAGES[key][key_specific]
 
 #Change at the beginning of each session
 PARTICIPANT_ID = '1'
 
-folder_path = '/Users/raynahata/Desktop/Github/quori_ros/src/quori_exercises/intake_logs/' 
+folder_path = '/Users/raynahata/Desktop/Github/quori_ros_rayna/src/quori_exercises/intake_logs/' 
 if not os.path.exists(folder_path): 
     os.makedirs(folder_path) 
 
@@ -73,14 +73,12 @@ formatter=logging.Formatter(
     fmt='%(asctime)s.%(msecs)03d,%(message)s',
     datefmt='%Y-%m-%d,%H:%M:%S'
 )
-#formatter = logging.Formatter('%(asctime)s,%(message)s')
+
 fh.setFormatter(formatter)
 fh2.setFormatter(formatter)
 ch.setFormatter(formatter)
 logger.addHandler(fh)
-#logger.addHandler(ch)
 logger2.addHandler(fh2)
-#logger2.addHandler(ch)
 
              
 done_intake = False
@@ -90,37 +88,34 @@ logger.info('Begin, {}'.format('Starting intake'))
 logger2.info('Begin, {}'.format('Starting intake'))
 print("starting intake")
 
-
-# with keyboard.Listener(
-#         on_press=on_press,
-#         on_release=on_release) as listener:
-#     listener.join()
+#start the keyboard
 listener = keyboard.Listener(on_press=on_press)
 listener.start()
 
 
 while not done_intake:
     message=get_message()
+
+    if message == "quit":
+        done_intake=True
+        logger.info('Quit')
+        break
     print(message)
-    # print("here")
-    speak=input("Press enter to speak, else type back to go back")
+    speak=input("Press enter to speak, else type b to go back")
     if speak == "":
-        #logger.info('Begin speaking')
         print("Begin speaking")
         logger.info('Begin speaking,{}'.format(message))
         sp.text_to_speech(message)
         logger.info('End speaking')
         print("End speaking")
         
-    elif speak=="back":
-        #done_intake=True
-        #logger.info('Quit')
+    elif speak=="b":
         continue
 
 
     
     cont=input("Quit or Continue?")
-    if cont=="quit":
+    if cont=="q":
         done_intake=True
         logger.info('Quit')
     elif cont=="":
