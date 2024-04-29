@@ -1,0 +1,92 @@
+2024-04-17,11:20:47.705,Begin, Starting intake
+2024-04-17,11:20:52.102,Key, Introduction
+2024-04-17,11:20:53.120,Key Specific, Greeting
+2024-04-17,11:20:53.637,Begin speaking,['Welcome and thank you for taking the time to be part of this research study. My name is Quori. How are you today? ']
+2024-04-17,11:21:03.592,End speaking
+2024-04-17,11:21:03.593,Continue
+2024-04-17,11:21:05.464,Key, Introduction
+2024-04-17,11:21:08.963,Key Specific, Response positive
+2024-04-17,11:21:09.502,Begin speaking,[' Great. Thanks for sharing! I am glad to hear that.']
+2024-04-17,11:21:14.646,End speaking
+2024-04-17,11:21:18.691,Continue
+2024-04-17,11:21:21.639,Key, Consent
+2024-04-17,11:21:22.439,Key Specific, Start consent form
+2024-04-17,11:21:22.964,Begin speaking,['Before we begin, I need to ask you some basic information and go over the consent form in front of you. Please take a minute to read through the form. Please write your name when you are done.']
+2024-04-17,11:21:37.411,End speaking
+2024-04-17,11:21:37.411,Continue
+2024-04-17,11:21:38.889,Key, Consent
+2024-04-17,11:21:39.588,Key Specific, Part 2
+2024-04-17,11:21:39.977,Begin speaking,['Please read the block below your signature and choose one of the three options.']
+2024-04-17,11:21:46.642,End speaking
+2024-04-17,11:21:46.642,Continue
+2024-04-17,11:21:49.451,Key, Evaluation
+2024-04-17,11:21:55.662,Key Specific, back
+2024-04-17,11:21:57.503,Key, Consent
+2024-04-17,11:21:59.251,Key Specific, Part 3
+2024-04-17,11:21:59.853,Begin speaking,['Thank you for signing the consent form. ']
+2024-04-17,11:22:03.894,End speaking
+2024-04-17,11:22:04.566,Continue
+2024-04-17,11:22:05.815,Key, Consent
+2024-04-17,11:22:08.139,Key Specific, Explanation
+2024-04-17,11:22:09.991,Begin speaking,['As a recap  you will be completing a series of exercises and I will be evaluating you on your performance.              I will be recording your video and audio during the session. I will also be asking you questions about your experience.              I will be using this information to improve my coaching skills. If you have any questions my assistant can answer them for you.']
+2024-04-17,11:22:36.564,End speaking
+2024-04-17,11:22:38.815,Continue
+2024-04-17,11:22:41.078,Key, Evaluation
+2024-04-17,11:22:44.328,Key Specific, back
+2024-04-17,11:22:45.039,Key, Consent
+2024-04-17,11:22:48.840,Key Specific, back
+2024-04-17,11:22:51.464,Key, Evaluation
+2024-04-17,11:22:52.603,Key Specific, Begin evaluation
+2024-04-17,11:22:53.090,Begin speaking,['Before I explain the exercises, I would like to ask you a few questions.']
+2024-04-17,11:22:59.931,End speaking
+2024-04-17,11:23:00.542,Continue
+2024-04-17,11:23:01.616,Key, Evaluation
+2024-04-17,11:23:02.590,Key Specific, Enjoy?
+2024-04-17,11:23:03.090,Begin speaking,['Do you enjoy exercising?']
+2024-04-17,11:23:05.838,End speaking
+2024-04-17,11:23:06.666,Continue
+2024-04-17,11:23:08.134,Key, Evaluation
+2024-04-17,11:23:10.068,Key Specific, Why?
+2024-04-17,11:23:10.415,Begin speaking,['Why do you exercise?']
+2024-04-17,11:23:13.422,End speaking
+2024-04-17,11:23:13.990,Continue
+2024-04-17,11:23:15.402,Key, Evaluation
+2024-04-17,11:23:17.441,Key Specific, Energy Level
+2024-04-17,11:23:17.915,Begin speaking,['On a scale of 1 to 10, how would you rate your energy level today?']
+2024-04-17,11:23:24.325,End speaking
+2024-04-17,11:23:25.041,Continue
+2024-04-17,11:23:27.877,Key, Evaluation
+2024-04-17,11:23:29.288,Key Specific, Thank you
+2024-04-17,11:23:29.628,Begin speaking,['Thank you for answering the questions. I will now explain the exercises.']
+2024-04-17,11:23:36.519,End speaking
+2024-04-17,11:23:36.741,Continue
+2024-04-17,11:23:37.987,Key, Exercise explanation
+2024-04-17,11:23:39.015,Key Specific, Explain exercise routine
+2024-04-17,11:23:39.403,Begin speaking,['You will perform two rounds with 4 sets each. The first two sets will be bicep curls and the next two are lateral raises.In between each set there will be a rest period. Please look at the screen in front of you to see how to perform the exercises.']
+2024-04-17,11:23:59.025,End speaking
+2024-04-17,11:24:02.290,Continue
+2024-04-17,11:24:03.701,Key, Exercise explanation
+2024-04-17,11:24:05.392,Key Specific, Dumbbells
+2024-04-17,11:24:05.854,Begin speaking,['We have some dumbbells here for you to use if you choose to.']
+2024-04-17,11:24:11.244,End speaking
+2024-04-17,11:24:18.392,Continue
+2024-04-17,11:24:19.815,Key, Exercise explanation
+2024-04-17,11:24:21.279,Key Specific, Questions
+2024-04-17,11:24:21.528,Begin speaking,['Do you have any questions about the exercises or the routine? My assistant can help you with any questions you have.']
+2024-04-17,11:24:30.962,End speaking
+2024-04-17,11:24:31.566,Continue
+2024-04-17,11:24:32.276,Key, Exercise explanation
+2024-04-17,11:24:34.891,Key Specific, back
+2024-04-17,11:24:37.403,Key, Coach type
+2024-04-17,11:24:39.539,Key Specific, Ask type
+2024-04-17,11:24:41.643,Begin speaking,['I want to be the best coach I can be for you, so I want to understand how you like to be coached. For example, when you make a mistake, I could give you feedback that sounds like “Amazing effort! Lets aim for full range next time”. Or I could say something like “Focus on improving your range. Keep pushing!” Do you think you like the first way or the second way?']
+2024-04-17,11:25:09.909,End speaking
+2024-04-17,11:25:11.241,Continue
+2024-04-17,11:25:15.077,Key, Start exercise
+2024-04-17,11:25:15.769,Key Specific, Start
+2024-04-17,11:25:16.107,Begin speaking,['Before we start, please fill out a survey about how I introduced you to the exercise session. Once you are done, please pick up the dumbbells if you want to use them.']
+2024-04-17,11:25:29.000,End speaking
+2024-04-17,11:25:29.002,Continue
+2024-04-17,11:25:30.847,Key, quit
+2024-04-17,11:25:30.847,Quit
+2024-04-17,11:25:30.847,Quit
