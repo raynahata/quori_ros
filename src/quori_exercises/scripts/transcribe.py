@@ -1,16 +1,13 @@
 import whisper
 import glob
-from pydub import AudioSegment as convert
-import os
 from whisper.utils import get_writer
-
-
 import os
 from pydub import AudioSegment
+import torch
 
 def convert_m4a_to_mp3():
-    original_files_path = "/Users/raynahata/Desktop/Github/quori_ros_rayna/src/quori_exercises/audio_files/original_files"  
-    converted_files_path = "/Users/raynahata/Desktop/Github/quori_ros_rayna/src/quori_exercises/audio_files/mp3_files"  
+    original_files_path = "/mnt/c/Users/rayna/Desktop/GitHub/quori_ros_rayna/src/quori_exercises/audio_files/original_files"
+    converted_files_path = "/mnt/c/Users/rayna/Desktop/GitHub/quori_ros_rayna/src/quori_exercises/audio_files/mp3_files"  
     # Loop through all files in the directory
     for filename in os.listdir(original_files_path):
         if filename.endswith(".m4a"):
@@ -32,29 +29,31 @@ def convert_m4a_to_mp3():
 
 
 def get_transcription(audio_file):
-    output_folder="/Users/raynahata/Desktop/Github/quori_ros_rayna/src/quori_exercises/audio_files/transcription"
+    #torch.cuda.init()
+    #device="cuda"
+    output_folder="/mnt/c/Users/rayna/Desktop/GitHub/quori_ros_rayna/src/quori_exercises/audio_files/transcription"
     # Load the Whisper model
 
-    model = whisper.load_model("base")
+    model = whisper.load_model("large")
     
     # Perform transcription
-    result = model.transcribe(audio_file)
+    result = model.transcribe(audio_file,condition_on_previous_text=False )
     
     txt_writer = get_writer("txt", output_folder)
     txt_writer(result, audio_file)
 
-    
     return f"Transcription saved to {output_folder}"
 
 
 if __name__ == "__main__":
-   
-    participant_number = 8
-    audio_file_path = f"/Users/raynahata/Desktop/Github/quori_ros_rayna/src/quori_exercises/audio_files/mp3_files/Participant {participant_number}.mp3"
-
     convert_m4a_to_mp3()
+    # participant_number = 8
+    for participant_number in range(1, 9):
+        audio_file_path = f"/mnt/c/Users/rayna/Desktop/GitHub/quori_ros_rayna/src/quori_exercises/audio_files/mp3_files/Participant {participant_number}.mp3"
+
+   
     
-    get_transcription(audio_file_path)
+        get_transcription(audio_file_path)
 
 
 

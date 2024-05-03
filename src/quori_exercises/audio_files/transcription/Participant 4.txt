@@ -1,0 +1,204 @@
+So you can take a seat or either stand in the box, it's up to you.
+Oh, in the box?
+Yeah.
+Welcome and thank you for taking the time to be part of this research study.
+My name is Corey. How are you today? I'm good. How are you? I am good. Thank you for asking.
+Before we begin, I need to ask you some basic information and go over the consent form next
+to you. Please take a minute to read through the form. Please write your name when you are
+done and let me know.
+Sounds good.
+I granted the permission on the form.
+It is asking me to get your instructions for the next steps.
+Please read the block below your signature and choose one of the three options.
+There should be a block below where you signed your name.
+Oh, yeah, I already gave you permission.
+It has three options.
+Yeah, I gave you the permission.
+You can go ahead.
+Thank you for signing the consent form.
+Before I explain the exercises, I would like to ask you a few questions.
+Go ahead.
+How old are you?
+I'm 27.
+Do you enjoy exercising?
+Yeah, from time to time.
+Why do you exercise?
+Where or how?
+Why?
+Oh, because I want to get fit.
+On a scale of 1 to 10, how would you rate your energy level today?
+8
+Thank you for answering the questions. I will now explain the exercises.
+Sounds good.
+You will perform two rounds with four sets each.
+The first two sets will be bicep curls and the next two are lateral raises in between each set.
+There will be a rest period.
+Please look at the screen in front of you to see how to perform the exercises.
+Okay.
+Yeah, I'm seeing the screen.
+We have some dumbbells here for you to use if you choose to.
+Yeah, I got that.
+Do you have any questions about the exercises or the routine?
+My assistant can help you with any questions you have.
+I think I'm good. Just let me know when I should start the exercise.
+I want to be the best coach I can be for you.
+So I want to understand how you like to be coached.
+For example, when you make a mistake, I could give you feedback that sounds like,
+Amazing effort. Let's aim for full range next time.
+Or I could say something like, Focus on improving your range.
+Keep pushing. Do you think you like the first way or the second way?
+The second way.
+Thank you for answering the question.
+Before we start, please fill out a survey about how I introduced you to the exercise
+session.
+Once you are done, please pick up the dumbbells if you want to use them.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+I think the floor.
+We are going to start round one of the exercises now.
+Get ready to start set one of four. You will be doing bicep curls. Start bicep curls now.
+Great work! You're showing impressive progress.
+Well done. Your form is looking really good today.
+Thank you.
+You're doing great. Keep up the good work.
+Almost done. Rest.
+Rest for 20 more seconds.
+Get ready to start set 2 of 4.
+You will be doing bicep curls.
+Start bicep curls now.
+You're crushing those bicep curls.
+Keep up the good work.
+Thank you.
+Excellent job.
+Keep up the strong pace.
+Almost done.
+Rest.
+Rest for 20 more seconds.
+Get ready to start set 3 of 4.
+You will be doing lateral raises.
+Do lateral raises now.
+You're looking strong and focused. Keep up the good work.
+You're doing fantastic. Keep up the good work.
+Almost done. Rest.
+Rest for 20 more seconds.
+Get ready to start set 4 of 4.
+You will be doing lateral raises.
+Lateral raises now.
+Well done. Your form is looking great on these raises.
+Thank you.
+You're welcome.
+Almost done.
+Rest.
+Round complete. Please fill out a survey about this round.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+I'm done with round one survey.
+Get ready to start set one of four.
+You will be doing bicep curls.
+Start bicep curls now.
+Maintain proper form to prevent shoulder strain.
+Focus on maintaining proper form despite feeling fatigue.
+Focus on keeping your core stable during each curl.
+Almost done.
+Rest.
+Rest for 20 more seconds.
+Get ready to start set 2 of 4.
+You will be doing bicep curls.
+Start bicep curls now.
+Focus on maintaining proper elbow alignment throughout the exercise.
+Maintain proper form to maximize effectiveness.
+Focus on maintaining proper form.
+Almost done.
+Rest for 20 more seconds.
+Get ready to start set 3 of 4.
+You will be doing lateral raises.
+Turn lateral raises now.
+Maintain proper form to prevent shoulder injury.
+Focus on maintaining proper form for each repetition.
+Almost done.
+Rest.
+Rest for 20 more seconds.
+Get ready to start set 4 of 4.
+You will be doing lateral raises.
+Do lateral raises now.
+Focus on keeping your shoulders level for better form.
+Focus on keeping proper form despite fatigue.
+Almost done.
+Rest.
+Round complete. Please fill out a survey about this round.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+Thank you.
+I feel this way.
+Cool.
+Thank you.
+Okay.
+Sounds good.
+Yeah.
+What do you think?
+It's pretty good.
+Like, so, I actually, like, did not know that there was going to be a round two.
+so my round one feedback might have been like a little skewed so you're seeing the numbers like
+my numbers are slightly more optimistic in the round one in the round one but when i experienced
+round two i was like okay this is better uh although i wrote it so did you like round one
+better around two although although the the categorization of round two is better but it
+was not actually responding to it was not giving suggestions that were correct because i was
+not feeling any fatigue, but it kept telling me
+that keep going in spite of fatigue.
+Those things, they make you confused.
+It's like, from what basis is it understanding that I'm fatigued?
+Am I doing something different?
+So I will check my movements.
+But I'm like, no, I'm doing the same exact movement.
+I have a thought on that.
+.
+No, no.
+So behind the scenes a little bit of why it
+thinks you're fatigued.
+So it has a heart rate.
+Yeah.
+And so there, it's basically there are, you know, certain zones that we can kind of defend of like, okay, if you're at 20% or this percent or that percent.
+But what we, what those thresholds are for deciding when this is more, this is fatigue, this is not fatigue.
+Oh, the delineation.
+Yeah, so that's like, we don't know what those are.
+So that's like me arbitrarily putting stuff and then seeing if it makes sense.
+And if it doesn't make sense, we can change that.
+So what I can do now is I can go and look at the heart rate data
+and see what your numbers actually were
+and then change the threshold based on that.
+So that's kind of the whole point.
+Yeah, yeah.
+When is this fatigue?
+It's, yeah.
+Because I think it's...
+Heart rate's 94.
+No, what is your heart rate you're servicing?
+Because that's the actual heart rate.
+Heart rate.
+What?
+HRR.
+.
+Oh, yes.
+Somebody walked off on the answer page.
+Oh, yeah.
+0.16.
+Okay.
+Yeah.
+So the T is moderate.
+Okay.
+Yeah.
+So then basically I have to – that's like on a percentage basis.
+So what then I can do is change what I decide is – also, one more thing is like because
+we are doing like strength exercises
