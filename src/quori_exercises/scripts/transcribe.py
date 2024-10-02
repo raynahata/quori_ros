@@ -47,8 +47,9 @@ def get_transcription(audio_file):
 
 if __name__ == "__main__":
     convert_m4a_to_mp3()
-    # participant_number = 8
-    for participant_number in range(1, 9):
+    #participant_number = 15
+    for participant_number in range(20, 22):
+
         audio_file_path = f"/mnt/c/Users/rayna/Desktop/GitHub/quori_ros_rayna/src/quori_exercises/audio_files/mp3_files/Participant {participant_number}.mp3"
 
    
