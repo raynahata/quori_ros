@@ -28,7 +28,7 @@ def text_to_speech(text):
 
 
 def main(): #tester main function 
-    text=im.INTAKE_MESSAGES["Introduction"]["Greeting"]
+    text=im.DEMO_MESSAGES["Introduction"]["Greeting"]
     text_to_speech(text)
 
 
