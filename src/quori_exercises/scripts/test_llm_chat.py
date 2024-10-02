@@ -22,6 +22,8 @@ os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_API_KEY"] = "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"
 model = ChatOllama(model="llama2",temperature=0) #use mistral as model
 
+#mistral makes whole paragraphs not sentences?  
+
 
 store = {}
 config = {"configurable": {"session_id": "test1"}} #session ID, resets every time you make a new session ID
@@ -40,6 +42,9 @@ def remove_between_asterisks(text):
 
 
 #use rag to extract examples insteat of the prompt 
+
+
+
 #custom prompt for exercise robot 
 prompt = ChatPromptTemplate.from_messages(
     [
